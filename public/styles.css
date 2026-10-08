@@ -24,6 +24,7 @@ button:focus-visible, select:focus-visible, a:focus-visible { outline: 3px solid
 .weather-info, .notice { width: min(340px, calc(100% - 40px)); background: rgba(255,255,255,.93); border-radius: 5px; margin: 12px 0 0; padding: 13px 15px; font-size: 11px; }
 .weather-info p { margin: 0 0 9px; }
 .weather-info .privacy-note { color: #69716e; font-size: 10px; }
+.weather-info .time-note { font-size: 10px; color: #69716e; }
 .weather-info #data-warnings p { color: #835821; }
 .info-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .info-actions button { border: 0; padding: 2px 0; color: #365e68; background: transparent; font-size: 11px; }

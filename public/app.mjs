@@ -1,4 +1,4 @@
-import {evaluateWeather} from './weather-model.mjs';
+import {evaluateWeather,formatRainWindows} from './weather-model.mjs';
 import {renderStamp,resetStamp} from './stamp.mjs';
 
 const cities = [
@@ -15,118 +15,135 @@ const cities = [
   ['Lemvig',56.548,8.310],['Ringkøbing',56.090,8.245],['Ebeltoft',56.195,10.678],['Faaborg',55.095,10.242],
 ];
 
-const $ = id => document.getElementById(id);
-const root = $('weather-stamp');
-const state = {data:null,location:null,controller:null,loading:false,geoRequest:0};
-
-for (const [name,lat,lon] of cities.sort((a,b)=>a[0].localeCompare(b[0],'da'))) {
-  const option = new Option(name,name); option.dataset.lat=lat; option.dataset.lon=lon; $('city').add(option);
+const HORIZON_HOURS=6;
+const $=id=>document.getElementById(id);
+const root=$('weather-stamp');
+const slot=()=>({data:null,currentPending:false,forecastPending:false,currentWarnings:[],forecastWarnings:[],currentGeneration:0,forecastGeneration:0,controllers:{}});
+const state={country:slot(),local:null,target:null,geoRequest:0,countryReady:null};
+for(const [name,lat,lon] of cities.sort((a,b)=>a[0].localeCompare(b[0],'da'))){const option=new Option(name,name);option.dataset.lat=lat;option.dataset.lon=lon;$('city').add(option);}
+const fresh=reading=>{const age=Date.now()-Date.parse(reading?.observedAt);return reading&&age>=-60000&&age<=30*60000;};
+const useful=data=>Boolean(data&&(fresh(data.current?.temperature)||fresh(data.current?.cloudCover)||fresh(data.current?.summary)||fresh(data.observation)||data.forecast?.fresh!==false&&data.forecast?.intervals?.some(h=>Date.parse(h.end)>Date.now())));
+const active=()=>useful(state.local?.data)?state.local:state.country;
+const periodLabel=()=> 'de næste 6 timer';
+function notice(message=''){$('notice').textContent=message;$('notice').hidden=!message;}
+function merge(target,data,part){
+  target.data={...(target.data||{}),...data};
+  if(part==='current')target.currentWarnings=data.warnings||[];else target.forecastWarnings=data.warnings||[];
+  target.data.warnings=[...new Set([...target.currentWarnings,...target.forecastWarnings])];
 }
-
-function notice(message='') { $('notice').textContent=message; $('notice').hidden=!message; }
-
-function setLoading(loading) {
-  state.loading=loading;
-  document.body.dataset.loading=String(loading);
-  root.setAttribute('aria-busy',String(loading));
-  $('locate').disabled=loading;
-  $('locate').querySelector('span').textContent=loading?'Henter vejr…':'Brug min lokation';
-  $('refresh').disabled=loading || !state.location;
-}
-
-function render() {
-  if (!state.data) return;
+function display(){
+  const current=active(),data=current.data;
   const now=new Date();
-  const result=evaluateWeather(state.data,null,now);
-  renderStamp(root,state.data,state.location,now);
-  document.body.dataset.verdict=result.verdict;
-  const answers={rain:'Ja',dry:'Nej',unknown:'Ved ikke'};
-  $('stamp-answer').textContent=`Regntøj i dag: ${answers[result.verdict]}`;
-  $('stamp-answer').setAttribute('role','status');
-  $('forecast-detail').textContent=result.verdict==='rain'
-    ? result.observedWet?'Der er frisk målt nedbør i nærheden. Tag regntøj med.'
-      :'DMI forventer nedbør fra nu til midnat. Tag regntøj med.'
-    : result.verdict==='dry'?'Prognosen viser ingen væsentlig nedbør fra nu til midnat.'
-      :'Prognosen dækker ikke dagen godt nok til at afgøre, om regntøjet skal med.';
-  const warnings=[...state.data.warnings];
-  if(state.data.forecast && !result.complete)warnings.push('Prognosen dækker ikke hele resten af dagen.');
-  $('data-warnings').replaceChildren(...warnings.map(message=>{const p=document.createElement('p');p.textContent=message;return p;}));
-  $('info-toggle').classList.toggle('has-warning',warnings.length>0);
-  $('info-toggle').title=warnings.length?'Der mangler nogle vejrdata — læs mere':'Om vejrdata og privatliv';
+  if(useful(data)){
+    const location=data.scope==='denmark'?{name:'Danmark (overblik)'}:state.target;
+    renderStamp(root,data,location,now);
+    const result=evaluateWeather(data,HORIZON_HOURS,now);
+    document.body.dataset.verdict=result.verdict;
+    const prefix='Regntøj næste 6 t';
+    const answer=result.verdict==='rain'?'Ja':current.forecastPending?'…':result.verdict==='dry'?'Nej':'Ved ikke';
+    $('stamp-answer').textContent=`${prefix}: ${answer}`;
+    $('rain-times').textContent=result.rainWindows.length?formatRainWindows(result.rainWindows):'';
+    $('rain-times').hidden=!result.rainWindows.length;
+    root.dataset.rainTimes=String(result.rainWindows.length>0);
+    $('forecast-detail').textContent=current.forecastPending?`Henter prognosen for ${periodLabel()}. De aktuelle målinger er allerede vist.`
+      :result.verdict==='rain'?result.rainWindows.length?`Forventet nedbør ${periodLabel()}: ${formatRainWindows(result.rainWindows)}.`:'Der er frisk målt nedbør. Prognosens regntider er ikke tilgængelige.'
+        :result.verdict==='dry'?`Ingen forventet nedbør ${periodLabel()}.`:'Prognosen er ikke tilgængelig eller dækker ikke hele perioden. Vi svarer derfor ikke nej.';
+    const warnings=[...data.warnings];
+    if(data.forecast&&!result.complete)warnings.push('Prognosen dækker ikke hele den valgte periode.');
+    $('data-warnings').replaceChildren(...warnings.map(message=>{const p=document.createElement('p');p.textContent=message;return p;}));
+    $('info-toggle').classList.toggle('has-warning',warnings.length>0);
+    $('info-toggle').title=warnings.length?'Der mangler nogle vejrdata — læs mere':'Om vejrdata og privatliv';
+  }else{
+    resetStamp(root,{name:'Danmark (overblik)'},state.country.currentPending);
+    $('stamp-answer').textContent=state.country.currentPending?'Regntøj næste 6 t: …':'Regntøj næste 6 t: Ved ikke';
+    $('rain-times').hidden=true;root.dataset.rainTimes='false';
+    $('forecast-detail').textContent='Vejrdata er endnu ikke tilgængelige.';
+  }
+  $('refresh').disabled=state.country.currentPending||Boolean(state.local?.currentPending);
+  root.setAttribute('aria-busy',String(!useful(data)&&state.country.currentPending));
 }
-
-async function load(location) {
-  state.geoRequest++;
-  state.controller?.abort();
-  const controller=new AbortController(); state.controller=controller;
-  state.location=location; state.data=null;
-  resetStamp(root,location,true); setLoading(true); notice();
-  document.body.dataset.verdict='unknown';
-  $('stamp-answer').textContent='Regntøj i dag: …';
-  $('data-warnings').replaceChildren();
-  $('forecast-detail').textContent='Henter prognosen for resten af dagen…';
-  $('info-toggle').classList.remove('has-warning');
-  const timeout=setTimeout(()=>controller.abort('timeout'),30000);
-  try {
-    const params=new URLSearchParams({lat:location.lat.toFixed(2),lon:location.lon.toFixed(2)});
+async function request(scope,part,location,controller){
+  const params=new URLSearchParams({scope,part});
+  if(scope==='local'){params.set('lat',location.lat.toFixed(2));params.set('lon',location.lon.toFixed(2));}
+  if(part==='forecast')params.set('hours',String(HORIZON_HOURS));
+  const timeout=setTimeout(()=>controller.abort('timeout'),part==='current'?8000:18000);
+  try{
     const response=await fetch(`/api/weather?${params}`,{signal:controller.signal});
     const data=await response.json();
-    if(state.controller!==controller)return;
-    if(!response.ok && !data.fetchedAt)throw new Error(data.error || 'Vejrdata kunne ikke hentes. Prøv igen om lidt.');
-    if(!data.fetchedAt || !Array.isArray(data.warnings))throw new Error('Vejrdata kunne ikke læses.');
-    state.data=data; render();
-  } catch(error) {
-    if(state.controller!==controller)return;
-    resetStamp(root,location);
-    root.querySelector('[data-stamp="weather"]').textContent='Vejr ukendt';
-    root.querySelector('[data-stamp="temperature-source"]').textContent='Der mangler aktuelle vejrdata.';
-    root.querySelector('[data-stamp="weather-source"]').textContent='Prøv at opdatere om lidt.';
-    $('stamp-answer').textContent='Regntøj i dag: Ved ikke';
-    $('forecast-detail').textContent='Vi kunne ikke hente en prognose for resten af dagen.';
-    $('info-toggle').classList.add('has-warning');
-    notice(controller.signal.aborted?'Det tog for lang tid at hente vejret. Prøv igen om lidt.':error.message);
-  } finally {
-    clearTimeout(timeout);
-    if(state.controller===controller)setLoading(false);
+    if(!data.fetchedAt)throw new Error(data.error||'Vejrdata kunne ikke hentes.');
+    return{...data,scope,part,warnings:Array.isArray(data.warnings)?data.warnings:[]};
+  }finally{clearTimeout(timeout);}
+}
+async function currentRequest(scope,target,location){
+  const generation=++target.currentGeneration;target.controllers.current?.abort();
+  const controller=new AbortController();target.controllers.current=controller;target.currentPending=true;display();
+  try{
+    const data=await request(scope,'current',location,controller);
+    if(target.currentGeneration!==generation||scope==='local'&&state.local!==target)return;
+    merge(target,data,'current');
+    if(scope==='local'&&!useful(data))notice('Lokale målinger kunne ikke hentes. Danmarksoverblikket vises stadig.');
+    else notice();
+  }catch(error){
+    if(target.currentGeneration!==generation||scope==='local'&&state.local!==target)return;
+    target.currentWarnings=[controller.signal.aborted?'Målingerne kunne ikke hentes inden for tidsgrænsen.':error.message];
+    if(scope==='local')notice('Lokale målinger kunne ikke hentes. Danmarksoverblikket vises stadig.');
+    else if(!useful(target.data))notice('Danmarksoverblikket kunne ikke hentes lige nu. Vælg en by, eller prøv at opdatere.');
+  }finally{
+    if(target.currentGeneration===generation){target.currentPending=false;display();}
   }
 }
-
-$('city').addEventListener('change',()=>{
-  const option=$('city').selectedOptions[0]; if(!option.value)return;
-  state.geoRequest++;
-  try {localStorage.setItem('regntoej-city',option.value);}catch{}
-  load({name:option.value,lat:Number(option.dataset.lat),lon:Number(option.dataset.lon)});
-});
+async function forecastRequest(scope,target,location){
+  const generation=++target.forecastGeneration;target.controllers.forecast?.abort();
+  const controller=new AbortController();target.controllers.forecast=controller;target.forecastPending=true;
+  if(target.data)target.data.forecast=null;
+  display();
+  try{
+    const data=await request(scope,'forecast',location,controller);
+    if(target.forecastGeneration!==generation||scope==='local'&&state.local!==target)return;
+    merge(target,data,'forecast');
+  }catch(error){
+    if(target.forecastGeneration!==generation||scope==='local'&&state.local!==target)return;
+    target.forecastWarnings=['Prognosen kunne ikke hentes. De aktuelle målinger vises stadig.'];
+    if(target.data){target.data.forecast=null;target.data.warnings=[...target.currentWarnings,...target.forecastWarnings];}
+  }finally{
+    if(target.forecastGeneration===generation){target.forecastPending=false;display();}
+  }
+}
+async function countryStart(){await currentRequest('denmark',state.country);void forecastRequest('denmark',state.country);}
+async function chooseLocal(location){
+  state.geoRequest++;$('locate').disabled=false;$('locate').querySelector('span').textContent='Brug min lokation';state.local?.controllers.current?.abort();state.local?.controllers.forecast?.abort();
+  state.target=location;const target=slot();state.local=target;
+  notice(`Henter lokalt vejr for ${location.name}…`);
+  await state.countryReady;
+  if(state.local!==target)return;
+  await currentRequest('local',target,location);
+  if(state.local!==target)return;
+  void forecastRequest('local',target,location);
+}
+$('city').addEventListener('change',()=>{const option=$('city').selectedOptions[0];if(!option.value)return;try{localStorage.setItem('regntoej-city',option.value);}catch{};void chooseLocal({name:option.value,lat:Number(option.dataset.lat),lon:Number(option.dataset.lon)});});
 $('locate').addEventListener('click',()=>{
   if(!navigator.geolocation){notice('Din browser understøtter ikke lokation. Vælg en by i stedet.');return;}
-  $('locate').disabled=true; $('locate').querySelector('span').textContent='Finder lokation…';notice();
-  const request=++state.geoRequest;
+  const generation=++state.geoRequest;$('locate').disabled=true;$('locate').querySelector('span').textContent='Finder lokation…';
   navigator.geolocation.getCurrentPosition(position=>{
-    if(request!==state.geoRequest)return;
-    $('city').value='';
-    try {localStorage.removeItem('regntoej-city');}catch{}
-    load({name:'Din lokation',lat:Math.round(position.coords.latitude*100)/100,lon:Math.round(position.coords.longitude*100)/100});
+    if(generation!==state.geoRequest)return;
+    $('locate').disabled=false;$('locate').querySelector('span').textContent='Brug min lokation';$('city').value='';
+    try{localStorage.removeItem('regntoej-city');}catch{}
+    void chooseLocal({name:'Din lokation',lat:Math.round(position.coords.latitude*100)/100,lon:Math.round(position.coords.longitude*100)/100});
   },error=>{
-    if(request!==state.geoRequest)return;
-    $('locate').disabled=state.loading;
-    $('locate').querySelector('span').textContent=state.loading?'Henter vejr…':'Brug min lokation';
+    if(generation!==state.geoRequest)return;
+    $('locate').disabled=false;$('locate').querySelector('span').textContent='Brug min lokation';
     notice(error.code===1?'Adgang til din lokation blev ikke givet. Vælg din by, eller tillad lokation i browseren.':'Din lokation kunne ikke findes. Vælg din by i stedet.');
   },{enableHighAccuracy:false,timeout:12000,maximumAge:300000});
 });
-$('info-toggle').addEventListener('click',()=>{
-  const expanded=$('info-toggle').getAttribute('aria-expanded')==='true';
-  $('info-toggle').setAttribute('aria-expanded',String(!expanded));
-  $('weather-info').hidden=expanded;
-});
-$('refresh').addEventListener('click',()=>state.location && load(state.location));
-window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',render);
-setInterval(()=>{if(state.location && !state.loading && document.visibilityState==='visible')load(state.location);},5*60000);
-document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible' && state.location && !state.loading && (!state.data || Date.now()-Date.parse(state.data.fetchedAt)>5*60000))load(state.location);
-});
-resetStamp(root);
-try {
-  const remembered=localStorage.getItem('regntoej-city');
-  const city=cities.find(c=>c[0]===remembered);
-  if(city){$('city').value=city[0];load({name:city[0],lat:city[1],lon:city[2]});}
-}catch{}
+$('info-toggle').addEventListener('click',()=>{const expanded=$('info-toggle').getAttribute('aria-expanded')==='true';$('info-toggle').setAttribute('aria-expanded',String(!expanded));$('weather-info').hidden=expanded;});
+async function refresh(){
+  if(state.target&&state.local){const target=state.local;await currentRequest('local',target,state.target);if(state.local===target)void forecastRequest('local',target,state.target);}
+  else await countryStart();
+}
+$('refresh').addEventListener('click',()=>void refresh());
+window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',display);
+setInterval(()=>{if(document.visibilityState==='visible'&&!active().currentPending)void refresh();},5*60000);
+document.addEventListener('visibilitychange',()=>{const data=active().data;if(document.visibilityState==='visible'&&!active().currentPending&&(!data||Date.now()-Date.parse(data.fetchedAt)>5*60000))void refresh();});
+resetStamp(root,{name:'Danmark (overblik)'},true);
+state.countryReady=countryStart();
+try{const saved=localStorage.getItem('regntoej-city');const remembered=cities.find(c=>c[0]===saved);if(remembered)void state.countryReady.then(()=>{if(state.target||state.geoRequest>0)return;$('city').value=remembered[0];return chooseLocal({name:remembered[0],lat:remembered[1],lon:remembered[2]});});}catch{}

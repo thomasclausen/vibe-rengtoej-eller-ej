@@ -13,6 +13,10 @@
 .stamp-text p { font-size: 18px; font-weight: 700; line-height: 1.5; text-transform: uppercase; margin: 0; }
 .stamp-text > span { font-size: 14px; line-height: 1.5; display: block; overflow-wrap: anywhere; }
 .stamp-answer { display: block; font-size: 9px; color: #64706c; line-height: 1.4; margin-top: 5px; }
+.stamp-rain-times { display: block; font-size: 9px; color: #835821; line-height: 1.4; margin-top: 3px; overflow-wrap: anywhere; }
+.weather-stamp[data-rain-times=true] .stamp-text { flex-basis: 104px; }
+.weather-stamp[data-scope=denmark] .stamp-price { font-size: 30px; }
+.weather-stamp[data-scope=denmark] .stamp-text p { font-size: 14px; }
 .weather-stamp[data-weather=sun] { --stamp-picture: #dd8872; }
 .weather-stamp[data-weather=cloud] { --stamp-picture: #3f636f; }
 .weather-stamp[data-weather=partly-cloudy] { --stamp-picture: #7a9c99; }
