@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f6ef">
+  <meta name="description" content="Skal regntøjet med i dag? Få en enkel anbefaling for din lokation med aktuelle målinger og prognoser fra DMI.">
+  <title>Regntøj eller ej? · En lille hjælp før du går ud</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.mjs"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Gå til indhold</a>
+  <header class="site-header wrap">
+    <a href="/" class="brand" aria-label="Regntøj eller ej? Forside">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 16a12 12 0 0 1 24 0H4Zm12-13v2m0 11v10a3 3 0 0 0 6 0M4 16q3-4 6 0 3-4 6 0 3-4 6 0 3-4 6 0"/></svg>
+      <span>regntøj eller ej<span class="brand-mark">?</span></span>
+    </a>
+    <a class="source-link" href="https://www.dmi.dk/friedata/dokumentation/apis" target="_blank" rel="noopener noreferrer"><span class="source-dot"></span> Vejrdata fra DMI <span aria-hidden="true">↗</span></a>
+  </header>
+
+  <main id="main" class="wrap">
+    <section class="hero" aria-labelledby="verdict-title">
+      <div class="hero-copy">
+        <p class="eyebrow">EN LILLE HJÆLP FØR DU GÅR UD</p>
+        <div class="status-pill" id="status-pill"><span id="status-dot"></span><span id="status-text">Klar til den danske hverdag</span></div>
+        <div id="recommendation" aria-live="polite" aria-atomic="true">
+          <h1 id="verdict-title">Skal regntøjet<br>med i dag?</h1>
+          <p class="hero-description" id="verdict-description">Cykeltur, hundeluftning eller bare ud ad døren.<br class="desktop-break"> Vi tjekker vejret, så du kan komme videre.</p>
+        </div>
+        <div class="location-controls">
+          <button type="button" class="button-primary" id="locate">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg>
+            <span>Brug min lokation</span>
+          </button>
+          <span class="or">eller</span>
+          <div class="city-picker"><label class="sr-only" for="city">Vælg en dansk by</label><select id="city"><option value="">Vælg din by</option></select><span aria-hidden="true">⌄</span></div>
+        </div>
+        <p class="location-caption" id="location-caption"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5a6 6 0 0 0-6 6c0 4 6 10 6 10s6-6 6-10a6 6 0 0 0-6-6Z"/><circle cx="10" cy="7.5" r="2"/></svg> Din lokation bruges kun til at hente vejret.</p>
+        <div class="notice" id="notice" role="status" hidden></div>
+      </div>
+      <div class="hero-visual">
+        <div class="visual-circle"></div>
+        <img class="raincoat-art" id="raincoat-art" src="/assets/raincoat.svg" alt="Illustration af en gul regnjakke og et par grønne gummistøvler" width="440" height="440">
+        <figure class="rain-gif" id="rain-gif" hidden>
+          <img id="gif-image" width="280" height="280" alt="En sød figur danser i regnvejr" referrerpolicy="no-referrer">
+          <figcaption><a href="https://giphy.com/gifs/cute-dancing-39fj7g99qyD72" target="_blank" rel="noopener noreferrer">Lidt regn. Stadig en god dag. ↗ <small>GIF via GIPHY</small></a></figcaption>
+        </figure>
+        <span class="handwritten" id="visual-caption">Klar til lidt af hvert.</span>
+      </div>
+    </section>
+
+    <section class="weather-stats" aria-label="Vejret kort fortalt">
+      <div class="stat"><span class="stat-label"><span aria-hidden="true">◷</span> Din lokation</span><strong id="place-value">Hvor skal du hen?</strong><span id="place-detail">Vælg lokation for at komme i gang</span></div>
+      <div class="stat"><span class="stat-label"><span aria-hidden="true">☂</span> Forventet nedbør</span><strong id="rain-value">— <small>mm</small></strong><span id="rain-detail">I de viste tidsrum</span></div>
+      <div class="stat"><span class="stat-label"><span aria-hidden="true">♧</span> Temperatur</span><strong id="temperature-value">— <small>°C</small></strong><span>Prognose for den nærmeste time</span></div>
+      <div class="stat"><span class="stat-label"><span aria-hidden="true">⌁</span> Nærmeste måling</span><strong id="observation-value">— <small>mm</small></strong><span id="observation-detail">Nedbør i seneste 10-minutters måling</span></div>
+    </section>
+
+    <section class="forecast-section" aria-labelledby="forecast-title">
+      <div class="forecast-heading"><div><p class="eyebrow">LIDT MERE AT GÅ EFTER</p><h2 id="forecast-title">Vejret på din vej.</h2></div><div class="period-picker" role="group" aria-label="Periode for anbefalingen"><button type="button" data-hours="" aria-pressed="true">Resten af dagen</button><button type="button" data-hours="2" aria-pressed="false">2 timer</button><button type="button" data-hours="6" aria-pressed="false">6 timer</button></div></div>
+      <div class="forecast-card" id="forecast-card" aria-busy="false">
+        <div class="forecast-card-header"><span><span class="source-dot"></span> <span id="forecast-location">Din lokale prognose</span></span><button id="refresh" type="button" class="refresh-button" disabled><span aria-hidden="true">↻</span> Opdater</button></div>
+        <div class="forecast-empty" id="forecast-empty"><svg viewBox="0 0 56 56" aria-hidden="true"><path d="M14 33a11 11 0 0 1 0-22 14 14 0 0 1 26 5 8.5 8.5 0 0 1 0 17H14Zm4 8-3 6m15-6-3 6m15-6-3 6"/></svg><p>Først din lokation. Så dit vejr.</p><span>Vi henter dagens prognose og en frisk måling fra DMI.</span></div>
+        <div class="hourly-scroll" id="hourly" tabindex="0" aria-label="Timeoversigt. Rul til siden for flere timer." hidden></div>
+        <div class="forecast-footer"><span id="updated">Målinger + prognoser. En mere oplyst tur ud.</span><span><span class="legend-dot"></span> Nedbør i mm</span></div>
+      </div>
+      <p class="interval-note" id="interval-note" hidden>Hvert tidsrum viser nedbør for hele timen. Den første og sidste time kan også indeholde nedbør uden for din valgte periode. Nedbør kan være regn, slud eller sne.</p>
+    </section>
+
+    <section class="about-section" aria-label="Om anbefalingen">
+      <div class="about-intro"><span class="about-icon" aria-hidden="true">↗</span><h2>Mindre vejrsnak.<br>Mere frisk luft.</h2><p>En enkel anbefaling, bygget på rigtige vejrdata.</p></div>
+      <div class="about-details">
+        <details><summary>Hvordan vurderer vi regntøjet?<span aria-hidden="true">+</span></summary><p>Vi anbefaler regntøj ved mindst 0,1 mm i den seneste friske 10-minutters måling fra en station inden for 25 km, eller hvis DMI forventer mindst 0,2 mm i en time eller 0,5 mm samlet i din valgte periode. Grænserne er appens praktiske tommelfingerregel.</p><p>Prognosen gælder det nærmeste punkt i DMI’s vejrmodel. Målingen gælder vejrstationen, så der kan være forskel på vejret hos dig og ved stationen. En tør måling overtrumfer aldrig en våd prognose.</p></details>
+        <details><summary>Hvilke data bruger vi?<span aria-hidden="true">+</span></summary><p>Vi bruger DMI’s Meteorological Observation API til målte nedbørsmængder og Forecast Data EDR API med HARMONIE DINI til den forventede nedbør, temperatur og skydække. Der vises ikke en beregnet regnsandsynlighed.</p><p>En måling må højst være 30 minutter gammel. Hvis data mangler, får du det at vide. Vi lover kun “lad regntøjet blive hjemme”, når prognosen dækker hele den valgte periode.</p></details>
+        <details><summary>Hvad sker der med min lokation?<span aria-hidden="true">+</span></summary><p>Browseren beder om adgang, når du trykker “Brug min lokation”. Koordinaterne afrundes til to decimaler, før de sendes til appens server og DMI. Appen opretter ingen brugerprofil eller database med din lokation. Et manuelt byvalg huskes kun i din browser.</p><p>Netlify og DMI kan behandle forespørgsler i deres driftslogs og cache. Når GIF’en vises, hentes den fra GIPHY. Appen bruger ingen analyseværktøjer.</p></details>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer wrap"><span>regntøj eller ej? <span class="footer-dot">·</span> Lavet til det danske vejr.</span><span>Data: <a href="https://www.dmi.dk/friedata" target="_blank" rel="noopener noreferrer">DMI</a> <span class="footer-dot">·</span> En anbefaling, ingen vejrgaranti.</span></footer>
+  <noscript><p class="noscript">Slå JavaScript til for at hente vejrdata og bruge din lokation.</p></noscript>
+</body>
+</html>
