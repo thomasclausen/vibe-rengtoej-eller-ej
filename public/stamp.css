@@ -1,0 +1,31 @@
+/* Adapted from the user's stamp: https://codepen.io/thomasclausen/pen/wRJWop */
+:root { --stamp-picture: #dd8872; }
+.stamp-display { width: 100%; max-width: 312px; display: flex; justify-content: center; filter: drop-shadow(8px 16px 24px rgba(53,33,54,.2)); }
+.stamp-paper { background: #fff; border-radius: 2px; aspect-ratio: 312 / 456; width: 100%; max-width: 312px; padding: 24px; position: relative; display: flex; flex-direction: column; color: #333; font-family: Arial, Helvetica, sans-serif; -webkit-mask: url('/assets/stamp-mask.svg') 0 0 / 100% 100% no-repeat; mask: url('/assets/stamp-mask.svg') 0 0 / 100% 100% no-repeat; }
+.stamp-edge { display: none; }
+.stamp-picture { background: var(--stamp-picture); border-radius: 3px; flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.stamp-picture > img { display: block; width: 90%; height: auto; object-fit: contain; }
+.stamp-picture figure { margin: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.stamp-picture figure img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.stamp-text { position: relative; flex: 0 0 88px; padding: 18px 0 6px; }
+.stamp-price { float: right; font-size: 48px; font-weight: 700; letter-spacing: -2px; line-height: 1; margin: 0 0 0 8px; }
+.stamp-price sup { font-size: 55%; line-height: 0; vertical-align: super; letter-spacing: 0; }
+.stamp-text p { font-size: 18px; font-weight: 700; line-height: 1.5; text-transform: uppercase; margin: 0; }
+.stamp-text > span { font-size: 14px; line-height: 1.5; display: block; overflow-wrap: anywhere; }
+.stamp-answer { display: block; font-size: 9px; color: #64706c; line-height: 1.4; margin-top: 5px; }
+.weather-stamp[data-weather=sun] { --stamp-picture: #dd8872; }
+.weather-stamp[data-weather=cloud] { --stamp-picture: #3f636f; }
+.weather-stamp[data-weather=partly-cloudy] { --stamp-picture: #7a9c99; }
+.weather-stamp[data-weather=rain] { --stamp-picture: #dd8872; }
+.weather-stamp[data-weather=unknown] { --stamp-picture: #7a9c99; }
+.design-preview .app-sheet { width: min(1180px, calc(100% - 48px)); margin: 32px auto; padding: 16px; }
+.design-preview .preview-header { background: rgba(255,255,255,.9); padding: 16px 20px; border-radius: 6px; }
+.design-preview .preview-header h1 { font-size: 32px; margin: 10px 0; }
+.design-preview .preview-header p { font-size: 12px; max-width: 650px; }
+.design-preview .preview-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+.design-preview .stamp-examples { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 24px; padding-top: 32px; }
+.design-preview .stamp-display { margin: auto; }
+.design-preview .stamp-sources { font-size: 10px; text-align: center; padding-top: 10px; }
+.design-preview .stamp-sources span { display: block; }
+@media (max-width: 800px) { .design-preview .stamp-examples { grid-template-columns: 1fr; gap: 30px; } }
+@media (max-width: 380px) { .stamp-paper { padding: 21px; } .stamp-text { flex-basis: 80px; padding-top: 14px; } .stamp-price { font-size: 40px; } .stamp-text p { font-size: 16px; } .stamp-text > span { font-size: 13px; } }
