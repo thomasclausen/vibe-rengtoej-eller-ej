@@ -14,7 +14,7 @@ for (const example of cases) {
     current:{temperature:reading(example.temperature),cloudCover:reading(example.cloud)},
     observation:{precipitationMm:example.rain,observedAt:now.toISOString(),stationName:'Eksempeldata'},
   }, {name:example.place},now);
-  root.querySelector('.stamp-answer').textContent=example.kind==='rain'?'Regntøj i dag: Ja':'Regntøj i dag: Nej';
+  root.querySelector('.stamp-answer').textContent=example.kind==='rain'?'Regntøj næste 6 t: Ja':'Regntøj næste 6 t: Nej';
   root.setAttribute('aria-label',`Frimærke med eksempeldata: ${example.place}`);
   root.querySelector('[data-stamp="temperature-source"]').textContent='Eksempeldata · ikke en aktuel måling';
   root.querySelector('[data-stamp="weather-source"]').textContent='Motiv og tekst følger vejret i den rigtige app.';

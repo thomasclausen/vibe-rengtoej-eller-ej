@@ -1,160 +1,145 @@
-# Regntøj eller ej?
+# Regntøj eller ej? — version 1.3
 
-En dansk webapp, der hjælper brugeren med at vælge regntøj ud fra en frisk nedbørsmåling og DMI’s prognose for den valgte lokation. Appen er forberedt til Netlify.
+En lille dansk webapp med brugerens originale frimærke og gradient, bygget i HTML, CSS og JavaScript med en Netlify Function. Ingen database, Vue/Nuxt eller DMI API-key er nødvendig.
 
-## Version 1.2: et centreret frimærke
+## Nyt i denne version
 
-Designet tager udgangspunkt i brugerens [frimærke fra wRJWop](https://codepen.io/thomasclausen/pen/wRJWop). Den hvide kant, de 8 huller foroven/forneden, de 12 huller langs siderne og felterne nederst er bevaret og gjort responsive. Julemotivet er erstattet med vejrillustrationer og den ønskede GIF ved aktuelt regnvejr.
+- Appen starter automatisk med et mærket **Danmarksoverblik**. Temperaturen vises som et interval fra friske danske DMI-stationer, ikke som én temperatur for hele landet.
+- Data prioriteres: nationalt aktuelt vejr → national prognose → lokale målinger → lokal prognose. Prioriteten gælder igangsættelsen; en langsom national prognose forhindrer ikke lokale målinger i at blive vist.
+- Aktuelle målinger og prognoser hentes i separate HTTP-kald. En langsom eller overbelastet prognosetjeneste kan derfor ikke blokere temperaturen.
+- Vurderingen er **låst til de næste 6 timer**, også over midnat. Der er ingen tidsvælger.
+- Enhver positiv forventet nedbør i perioden giver **Ja**, også meget små mængder. Sammenhængende regntimer grupperes og vises i frimærket. Frisk målt nedbør giver også Ja.
+- Hvis data mangler, svarer appen **Ved ikke**, aldrig et ubekræftet Nej.
+- Et sent nationalt svar kan ikke overskrive brugerens lokale vejr.
+- En rolig illustration vises, mens GIF'en indlæses. GIF'en bruges ved aktuelt regnvejr; regn senere i perioden ændrer ikke det målte aktuelle vejrsymbol.
 
-- Prisfeltet viser den seneste friske temperatur i hele grader. Hvis der kun findes en prognose, fremgår det tydeligt nedenunder.
-- “Christmas” er erstattet med aktuel vejrtype: regnvejr, sol, overskyet, let skyet eller ukendt.
-- “Aalborg” er erstattet med den valgte by. Ved GPS vises brugerens afrundede koordinater.
-- Vejret på frimærket gælder lige nu. Anbefalingen om regntøj gælder den valgte periode; en byge senere i dag gør derfor ikke frimærket vådt nu.
-- Baggrundsgradienten fra [zmpGWZ](https://codepen.io/thomasclausen/pen/zmpGWZ) er genbrugt uændret fra brugerens indsendte kode. Den fylder nu hele siden. Frimærkets huller er gennemsigtige, så gradienten ses gennem kanten.
+## Opdater den eksisterende Netlify-app
 
-Efter deployment kan `/design-preview.html` bruges til at se frimærket med tre vejrtilstande. Siden viser tydeligt markerede eksempeldata, ikke en rigtig vejrudsigt.
+1. Pak ZIP-filen ud.
+2. Erstat repositoryets filer med **indholdet af projektmappen**, så `netlify.toml` ligger i roden.
+3. Medtag **alle filer**, især `lib/dmi.mjs`, `netlify/functions/weather.mjs`, `public/app.mjs` og `public/weather-model.mjs`.
+4. Commit/push til repositoryet, som allerede er tilknyttet Netlify. Den eksisterende opsætning genudgiver projektet.
 
-Siden viser kun gradienten og et centreret frimærke. Lokationsknap og byvalg står i en kompakt række nedenunder. DMI-linket står i en separat footer nederst til højre. Footer, kontroller og eventuelle fejlbeskeder følger sidens almindelige layout og kan derfor ikke lægge sig oven på frimærket. På små skærme kan siden rulles.
+Der skal ikke oprettes en ny app, database eller API-key. Under kontrollen den 8. oktober 2026 kørte den offentlige side stadig den første udgave: dens API-svar indeholdt ikke de aktuelle temperaturmålinger. Frontend og serverfunktion skal opdateres samlet.
 
-Svaret på “Regntøj i dag” står som en lille linje i frimærket. Måleoplysninger, prognoseproblemer og privatliv kan åbnes med **i**-knappen. Her findes også manuel opdatering.
+Kontrollér efter deployment:
 
-### Opdater den eksisterende live app
+```text
+/api/weather?scope=denmark&part=current
+/api/weather?scope=local&part=current&lat=55.68&lon=12.57
+/api/weather?scope=local&part=forecast&lat=55.68&lon=12.57&hours=6
+```
 
-Erstat repositoryets filer med **indholdet af projektmappen i den nye ZIP**, inklusive `public/`, `lib/` og `netlify/functions/`. Commit og push til det GitHub-repository, der allerede er forbundet til Netlify. Den eksisterende Netlify-opsætning genudgiver derefter projektet. Der skal ikke oprettes en ny app, database eller API-nøgle.
-
-## Teknologi
-
-- HTML, CSS og JavaScript uden framework eller tredjepartsafhængigheder.
-- En Netlify Function på `/api/weather` henter DMI’s data og håndterer cache, fejl og koordinater.
-- Ingen database, login eller Supabase er nødvendig. Supabase kan tilføjes senere, hvis der bliver behov for brugerprofiler eller historik.
-- DMI’s nye værtsnavn `opendataapi.dmi.dk` kræver ikke API-nøgle. Brug ikke det gamle `dmigw.govcloud.dk`.
-- Node.js 22 eller nyere.
-
-Vue/Nuxt ville tilføre ekstra opsætning uden at være nødvendig for denne lille app.
+Svarene fra denne version indeholder `version: "1.3.0"` og headeren `X-App-Version: 1.3.0`.
 
 ## Start lokalt
+
+Node.js 22 eller nyere:
 
 ```sh
 npm run dev
 ```
 
-Åbn `http://localhost:8888`. Serveren leverer både frontend og den samme funktion, som bruges på Netlify. Der skal ikke installeres pakker. Vælg en by eller tryk “Brug min lokation”. Første besøg viser ikke en opdigtet vejrudsigt.
+Åbn `http://localhost:8888`. Ingen pakker skal installeres til appen.
 
 ```sh
 npm test
 npm run build
 ```
 
-Build-kommandoen kontrollerer JavaScript og kører testene. Frontend-filerne i `public/` er allerede klar til udgivelse.
+`npm run build` kontrollerer JavaScript og kører testene. `public/` er allerede klar til udgivelse. En ren drag-and-drop-upload af `public/` til Netlify er utilstrækkelig: serverfunktionen skal også deployes. Brug det tilknyttede Git-repository eller Netlify CLI.
 
-## Udgiv på Netlify
+## Resultat af gennemgangen
 
-**Via Git (anbefalet)**
+Den gamle funktion ventede på fem datakald i én samlet `Promise.allSettled`, herunder prognosen og et genforsøg. Det samlede svar kunne derfor forsinke allerede tilgængelige målinger. Den gamle nedbørsregel havde også minimumsgrænser, og meget små prognoseværdier blev afrundet væk. Begge dele er ændret.
 
-1. Læg indholdet af denne mappe i et GitHub-, GitLab- eller Bitbucket-repository, med `netlify.toml` i repositoryets rod.
-2. I Netlify: vælg **Add new project → Import an existing project**, og vælg repositoryet.
-3. Netlify læser opsætningen fra `netlify.toml`: build `npm run build`, publish `public`, functions `netlify/functions`, Node 22.
-4. Udgiv projektet. Der kræves ingen miljøvariabler eller DMI-nøgle.
-5. Kontroller byvalg, geolokation, `/api/weather?lat=55.68&lon=12.57` og GIF-visning på den udgivne HTTPS-adresse.
+Målt lokalt den 8. oktober 2026 med rigtige DMI-data:
 
-**Via Netlify CLI**
+| Kald | Observeret svartid |
+| --- | ---: |
+| Gammel samlet lokal funktion | ca. 4,4 sekunder |
+| Nyt nationalt aktuelt vejr, kold cache | 726 ms |
+| Nyt nationalt aktuelt vejr, varm cache | 11 ms |
+| Nye lokale målinger, delt varm cache | 19 ms |
+| Separat lokal prognose, DMI HTTP 429 | 228 ms |
+| Prognose under kort cooldown | 7 ms |
 
-Fra denne projektmappe, på en maskine med Node 22+:
+Dette er observerede lokale svartider, ikke garantier. Netlify cold starts og brugerens netværk kan give ekstra ventetid. HTTP 429 er en servicefejl, ikke en vellykket prognose.
 
-```sh
-npx netlify-cli login
-npx netlify-cli init
-npx netlify-cli deploy --build --prod
+Funktionen returnerer `timings` og HTTP-headeren `Server-Timing` til fejlsøgning. Målingerne registreres ikke i en ekstern database.
+
+## Datakilder og begrænsninger
+
+### Aktuelle målinger
+
+DMI Meteorological Observation API:
+
+```text
+https://opendataapi.dmi.dk/v2/metObs/collections/observation/items
 ```
 
-CLI'en guider dig til et nyt eller eksisterende Netlify-projekt. Log ind via browseren; læg aldrig et personligt Netlify-token i kildekoden.
+Parametre: `temp_dry`, `cloud_cover` og `precip_past10min`. En samlet, kortvarigt cachet datakilde dækker danske DMI-stationer, og den genbruges ved lokationsvalg. Stationsmetadata filtreres med dato, så historiske stationsversioner ikke hentes unødigt.
 
-En ren drag-and-drop-upload af `public/` er utilstrækkelig, fordi serverfunktionen også skal deployes. Brug Git-import eller CLI.
+En måling må højst være 30 minutter gammel. Lokal temperatur bruger den nærmeste friske station inden for 50 km. Skydække måles ved færre stationer og bruger op til 75 km. En afstand over 25 km mærkes som en **regional måling**, og station/afstand fremgår under i-knappen. Nedbør bruger højst 25 km, fordi regn kan være meget lokal.
 
-## Hvad appen gør
+Regnvejr prioriteres ved frisk målt nedbør. Sol, let skyet og overskyet er appens vurdering af skydække, ikke en officiel DMI-vejrkode. Målingerne gælder stationerne og kan ikke bevise vejret på brugerens præcise position. Temperatur, skydække og nedbør kan komme fra forskellige stationer.
 
-- Browserens geolokation eller manuelt valg mellem 44 danske byer.
-- Anbefalingen gælder fra nu til dansk midnat.
-- Aktuel temperatur, vejrtype, lokation og en kort anbefaling i frimærket. Måleoplysninger findes bag i-knappen.
-- Et enkelt, mobiltilpasset layout med frimærket i centrum.
-- Den ønskede [GIPHY-animation](https://giphy.com/gifs/cute-dancing-39fj7g99qyD72) i frimærket ved aktuelt regnvejr. Ved reduceret bevægelse eller billedfejl bruges en rolig illustration.
-- Automatisk opdatering hvert femte minut, mens siden er synlig, samt en manuel opdateringsknap.
-- Ingen analyseværktøjer. Kun manuelt byvalg gemmes i browserens localStorage. Enhedens koordinater gemmes ikke i en brugerprofil.
+Danmarksoverblikkets temperaturinterval bygger på friske, gyldige danske temperaturmålinger. Uden lokationsvalg gives der ikke en skjult København-temperatur som nationalt resultat.
 
-## Datakilder og beregning
+### Prognoser
 
-**Prognose:**
+DMI Forecast Data EDR API med HARMONIE DINI:
 
-`GET https://opendataapi.dmi.dk/v1/forecastedr/collections/harmonie_dini_sf/position`
+```text
+https://opendataapi.dmi.dk/v1/forecastedr/collections/harmonie_dini_sf/instances
+https://opendataapi.dmi.dk/v1/forecastedr/collections/harmonie_dini_sf/instances/{run}/position
+```
 
-Parametre: `coords=POINT(lon lat)`, `crs=crs84`, `f=GeoJSON`, `parameter-name=total-precipitation,temperature-2m,wind-speed-10m,fraction-of-cloud-cover`.
+Appen vælger en tilgængelig modelkørsel, begrænser tidsrummet og henter kun `total-precipitation`, `temperature-2m` og `fraction-of-cloud-cover`. Formatet er CoverageJSON, som er mere kompakt end GeoJSON. GeoJSON understøttes også i parseren.
 
-En samlet forespørgsel henter alle tidstrin i den seneste komplette model. Nedbørsmængden beregnes som forskellen mellem akkumulerede værdier fra samme svar. Enheden kg/m² svarer til mm vand. Temperatur konverteres fra Kelvin til Celsius. Nulværdier, manglende data og fald i akkumulation blandes ikke sammen.
+En baseline før den første intervalslutning bruges til at beregne forskelle mellem akkumulerede nedbørsværdier. kg/m² svarer til mm vand, og Kelvin konverteres til Celsius. Baseline og intervalværdier kommer fra samme modelkørsel. Modelalderen vurderes ud fra modelkørslens start, ikke starten på det begrænsede forespørgselsvindue.
 
-**Måling:**
+Der medtages hele modeltimer, der overlapper de næste 6 timer. Den første time kan indeholde allerede falden nedbør, og den sidste kan strække sig lidt ud over perioden. Tidsrummene er derfor konservative, timebaserede intervaller. Et ekstra datapunkt kan medtages nær en timegrænse, så en kortvarigt cachet prognose stadig dækker perioden. Vurderingen filtrerer altid til de 6 timer.
 
-`GET https://opendataapi.dmi.dk/v2/metObs/collections/observation/items`
+`total-precipitation` inkluderer også vandækvivalent af slud/sne/hagl. Appen beregner ikke regnsandsynlighed eller radarbaseret nowcasting.
 
-Parametre: en lokal `bbox`, `parameterId=precip_past10min`, `period=latest-hour`, `limit=1000`.
+**National prognose:** Standardresultatet er et **regionalt overblik med 12 repræsentative modelpunkter** fordelt over Danmark, inklusive Bornholm. Det er ikke en fuld scanning af alle DMI-gridceller, og lokale byger mellem punkterne kan forekomme. Dette oplyses i dataoplysningerne. Ét kendt vådt punkt giver Ja. En ufuldstændig tør regional prognose må ikke give Nej. Efter lokationsvalg bruges det lokale modelpunkt.
 
-Appen vælger den nærmeste station med en gyldig måling, der er højst 30 minutter gammel og ligger inden for 25 km. Stationsnavne hentes fra `/v2/metObs/collections/station/items`; historiske stationsversioner filtreres efter gyldighed. Målingen siger noget om stationen og kan ikke bevise, om det regner på brugerens præcise position.
+DMI's prognoseendpoint returnerede fortsat HTTP 429 “Server is busy” i live-afprøvningen. Flere forespørgselsformer blev afprøvet, inklusive et bestemt modelrun, færre parametre og kortere tidsrum. En vellykket live-prognose kan endnu ikke bekræftes. Format og beregning er kontrolleret mod dokumentationen og testdata.
 
-**Aktuel temperatur og vejrtype:**
+## Cache og tidsgrænser
 
-Samme observationsendpoint bruges til `parameterId=temp_dry` (direkte i °C) og `parameterId=cloud_cover` (skydække). Disse målinger hentes uafhængigt af prognosen. Dermed kan frimærket stadig vise temperatur og skydække, når prognosetjenesten er overbelastet.
+- Nationale observationsdata genbruges på tværs af lokationer i samme varme funktion.
+- Netlify CDN kan cache brugbare svar i op til 120 sekunder.
+- Modelmetadata caches i 10 minutter og prognosedata i 5 minutter.
+- Fejlsvar caches kort; der foretages ikke et automatisk ekstra kald ved HTTP 429.
+- Prognosefejl udløser en kort cooldown, som kun påvirker prognoser, ikke målinger.
+- Målekald har en tidsgrænse på 4,5 sekunder. Prognosepunktkald har højst 6,5 sekunder, og det regionale overblik har et samlet budget på cirka 14 sekunder.
+- Kun to nationale prognosepunkter hentes samtidig.
+- Der gemmes højst 128 cacheposter pr. funktion. Cache er midlertidig; ingen database er nødvendig.
 
-Frisk observeret nedbør prioriteres som regnvejr. Ellers klassificerer appen skydække på højst 25 som sol, 75–100 som overskyet og mellemliggende værdier som let skyet. DMI’s særlige kode 112 bliver ukendt. Klassifikationen er appens vurdering, ikke DMI’s officielle vejrkode. Temperatur, regn og skydække kan komme fra forskellige stationer. Uden friske målinger kan den aktuelle timeprognose bruges med tydelig mærkning; ellers vises ukendte felter.
+## Design og privatliv
 
-**Anbefalingens tommelfingerregel:**
+Frimærket bygger på brugerens [wRJWop](https://codepen.io/thomasclausen/pen/wRJWop). Gradientens farvestop fra [zmpGWZ](https://codepen.io/thomasclausen/pen/zmpGWZ) er bevaret uændret. Den hvide perforerede kant er gennemsigtig mod baggrunden. DMI-linket ligger i sin egen footer og følger normalt layout; det kan ikke lægge sig oven på frimærket.
 
-- Regntøj ved målt nedbør på mindst **0,1 mm / 10 minutter**, eller prognose på mindst **0,2 mm i en time** eller **0,5 mm samlet i de viste tidsrum**.
-- “Lad regntøjet blive hjemme” kræver en sammenhængende, gyldig prognose for hele den valgte periode.
-- Uden tilstrækkelig prognose vises “Vi mangler lidt af vejret”. Frisk observeret nedbør kan stadig begrunde en anbefaling om regntøj.
-- En prognose, hvis første tidstrin er mere end 12 timer gammelt, regnes som for gammel. Dette er appens egen praktiske friskhedsgrænse.
-- Den igangværende time medtages konservativt med hele sin nedbørsmængde. Den kan derfor også indeholde nedbør, der allerede er faldet.
-- Nedbør kan også være slud, sne eller hagl. Appen beregner ingen regnsandsynlighed og laver ikke radarbaseret nowcasting.
+Lokationsknap og byvalg står diskret under frimærket. Oplysninger og manuel opdatering findes under i-knappen. Der er ingen tidsvælger. `/design-preview.html` viser tydeligt markerede eksempeldata.
 
-Grænserne kan ændres i `public/weather-model.mjs`. De er appens beslutningsregel, ikke en officiel beklædningsanbefaling fra DMI.
+Geolokation kræver et aktivt klik og browserens tilladelse. Koordinater afrundes til to decimaler. Appen opretter ingen brugerprofil eller lokationsdatabase. Et manuelt byvalg huskes i browseren. Netlify og DMI kan behandle forespørgsler i driftslogs/cache. GIF'en hentes fra GIPHY ved behov, og GIPHY kan se billedforespørgslen. Appen bruger ingen analyseværktøjer.
 
-## Cache, privatliv og fejl
+## Verifikation
 
-Koordinater afrundes til to decimaler før afsendelse fra browseren. Serveren validerer og afrunder dem igen. Appens område er en dansk bounding box (54,4–58° N, 7,5–15,5° Ø), som også indeholder lidt af nabolandene og havet.
-
-DMI-svar caches kortvarigt i funktionens hukommelse, med højst 100 poster. Stationsmetadata caches længere. Netlify CDN må cache brugbare svar i op til 120 sekunder; cachetiden afkortes ved dansk midnat. Der anvendes ikke `stale-while-revalidate`, som kunne lade gårsdagens svar fortsætte efter midnat. Dataforespørgsler kan fremgå af Netlify og DMI’s driftslogs. GIF'en hentes direkte fra GIPHY, når den er relevant; GIPHY kan dermed se billedforespørgslen.
-
-DMI-kald har timeout og én kort retry ved midlertidig overbelastning. Funktionens prognose- og observationskald er uafhængige, så en fejlet prognose ikke skjuler en brugbar observation. Manglende og gamle data bliver aldrig stiltiende til 0 mm.
-
-## Verifikation i denne leverance
-
-- 18 automatiske tests dækker nedbørsdifferencer, perioder, dansk midnat og sommertid, tærskler, gamle/manglende data, stationsvalg, koordinater, API-validering, aktuelle temperaturer/skydække og en overbelastet prognosetjeneste.
-- 9 yderligere DOM-kontroller med jsdom er kørt under udviklingen: indlæsning, 0°C, lokation, sol nu/regn senere, skjulte dataoplysninger, GIF, reduceret bevægelse, billedfejl, negative grader, ukendte data, afvist lokation og en separat DMI-footer. jsdom er kun brugt som lokalt QA-værktøj og er ikke en afhængighed i appen.
-- Lokal HTTP-server og aktuelle målinger er afprøvet med rigtige DMI-data. For København blev Botanisk Have valgt til nedbør, Landbohøjskolen til temperatur og Københavns Lufthavn til skydække. Temperatur og skydække virker også, når prognosen mangler.
-- DMI’s prognoseendpoint returnerede gentagne gange HTTP 429 “Server is busy” under afprøvningen den 8. oktober 2026. En vellykket live-prognose kan derfor endnu ikke bekræftes. Prognoseintegration er kontrolleret mod dokumentationen og testdata med det dokumenterede GeoJSON-format.
-- Automatisk browserkontrol kunne ikke starte i dette lokale miljø. Visuel kontrol og browserens geolokation/GIF-flow skal derfor bekræftes på previewet eller efter deployment.
-- Version 1.0 er udgivet af brugeren på [regntoej-eller-ej.netlify.app](https://regntoej-eller-ej.netlify.app/). Denne opdatering, version 1.2, leveres som kildekode og ZIP og skal lægges i det tilknyttede GitHub-repository for at komme live.
+- 29 automatiske tests består, inklusive små regnmængder, seks timer over midnat, CoverageJSON, modelalder, nationalt temperaturinterval, delvise prognoser, stationsafstande og separate måle-/prognosekald.
+- 9 yderligere DOM-kontroller med jsdom består: data vises før prognoser, den ønskede rækkefølge, sene nationale svar, regntidsrum, låst periode, GIF-indlæsning, reduceret bevægelse og lokationsfejl/races.
+- jsdom er kun et lokalt QA-værktøj og er ikke en afhængighed i appen.
+- Browserkontrollen kunne ikke starte i miljøet; fuld automatisk visuel kontrol er derfor ikke gennemført. Den lokale preview kan bruges til manuel kontrol.
+- Version 1.3 leveres som ZIP/kildekode og er ikke deployet til brugerens Netlify-konto fra denne chat.
 
 ## Officielle kilder
 
-- [DMI: API-oversigt](https://www.dmi.dk/friedata/dokumentation/apis)
-- [DMI: endpoints, autentifikation og begrænsninger](https://www.dmi.dk/friedata/dokumentation/basics)
-- [DMI: Forecast Data EDR API](https://www.dmi.dk/friedata/dokumentation/forecast-data-edr-api)
-- [DMI: HARMONIE-parametre](https://www.dmi.dk/friedata/dokumentation/data/weather-model-harmonie-edr-api-parameter-list)
-- [DMI: Meteorological Observation API](https://www.dmi.dk/friedata/dokumentation/meteorological-observation-api)
-- [DMI: observationsparametre](https://www.dmi.dk/friedata/dokumentation/meteorological-observations-data)
-- [Netlify: JavaScript Functions](https://docs.netlify.com/build/functions/get-started/)
-
-## Filer
-
-```text
-public/                  HTML, CSS, browserkode og illustrationer
-public/stamp.mjs          Frimærkets temperatur, vejrtekst, lokation og GIF
-public/stamp.css          Responsiv tilpasning af det originale frimærke
-public/background.css     Brugerens originale baggrundsgradient
-public/design-preview.*  Tre frimærker med tydeligt markerede eksempeldata
-public/weather-model.mjs Delte tids- og anbefalingsregler
-lib/dmi.mjs              DMI-kald, parsing, stationsvalg og cache
-netlify/functions/       Serverfunktionen på /api/weather
-scripts/                 Lokal server og build-kontrol
-tests/                   Automatiske tests
-netlify.toml             Deployment og sikkerhedsheaders
-```
+- [DMI API-oversigt](https://www.dmi.dk/friedata/dokumentation/apis)
+- [DMI autentifikation og begrænsninger](https://www.dmi.dk/friedata/dokumentation/basics)
+- [DMI Meteorological Observation API](https://www.dmi.dk/friedata/dokumentation/meteorological-observation-api)
+- [DMI observationsparametre](https://www.dmi.dk/friedata/dokumentation/meteorological-observations-data)
+- [DMI Forecast Data EDR API](https://www.dmi.dk/friedata/dokumentation/forecast-data-edr-api)
+- [DMI HARMONIE-parametre](https://www.dmi.dk/friedata/dokumentation/data/weather-model-harmonie-edr-api-parameter-list)
+- [Netlify JavaScript Functions](https://docs.netlify.com/build/functions/get-started/)

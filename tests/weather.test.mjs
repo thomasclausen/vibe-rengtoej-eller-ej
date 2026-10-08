@@ -1,10 +1,11 @@
-import test from 'node:test';
+import test, {beforeEach} from 'node:test';
 import assert from 'node:assert/strict';
-import { midnightAfter, evaluateWeather, currentWeather } from '../public/weather-model.mjs';
-import { parseForecast, selectObservation, selectMeasurement, validateCoordinates } from '../lib/dmi.mjs';
+import { midnightAfter, evaluateWeather, currentWeather, formatRainWindows } from '../public/weather-model.mjs';
+import { parseForecast, selectObservation, selectMeasurement, validateCoordinates, clearDataCache, nationalCurrent, combineRegionalForecasts, coverageToGeoJSON } from '../lib/dmi.mjs';
 import handler from '../netlify/functions/weather.mjs';
 
 const now = new Date('2026-10-08T07:30:00Z');
+beforeEach(clearDataCache);
 const point = (time,mm,temp=283.15) => ({geometry:{coordinates:[12.57,55.68]},properties:{step:time,'total-precipitation':mm,'temperature-2m':temp,'wind-speed-10m':5,'fraction-of-cloud-cover':0.4}});
 function day(mm=0) {
   const points = [];
@@ -162,6 +163,7 @@ test('API integrates forecast and station responses and survives forecast overlo
   const observation={features:[{geometry:{coordinates:[12.57,55.68]},properties:{stationId:'test-station',parameterId:'precip_past10min',observed:new Date(liveNow.getTime()-5*60000).toISOString(),value:0}}]};
   let overloaded=false;let retries=0;
   globalThis.fetch=async url=>{
+    if(url.pathname.endsWith('/instances'))return Response.json({instances:[{id:first.toISOString().slice(0,10)+'T'+first.toISOString().slice(11,13)+'0000Z'}]});
     if(url.pathname.includes('forecastedr')) {
       if(overloaded) {retries++;return Response.json({error:'Busy'},{status:429});}
       return Response.json({features});
@@ -182,6 +184,95 @@ test('API integrates forecast and station responses and survives forecast overlo
     const missing=await partial.json();
     assert.equal(missing.forecast,null);assert.ok(missing.observation);
     assert.equal(evaluateWeather(missing,null,liveNow).verdict,'unknown');
-    assert.equal(retries,2);assert.match(missing.warnings[0],/optaget/);
+    assert.equal(retries,1);assert.match(missing.warnings.join(' '),/optaget/);
   } finally {globalThis.fetch=original;}
+});
+
+test('One arbitrarily small positive forecast interval triggers yes and its time is reported',()=>{
+ const data=day();data.forecast.intervals[2].precipitationMm=0.000001;
+ const result=evaluateWeather(data,6,now);
+ assert.equal(result.verdict,'rain');assert.equal(result.rainWindows.length,1);
+ assert.equal(result.rainWindows[0].start,data.forecast.intervals[2].start);
+});
+
+test('Rain outside the next six hours does not affect the answer; adjacent rain hours merge',()=>{
+ const data=day();data.forecast.intervals[8].precipitationMm=2;
+ assert.equal(evaluateWeather(data,6,now).verdict,'dry');
+ data.forecast.intervals[2].precipitationMm=0.001;data.forecast.intervals[3].precipitationMm=0.001;
+ const result=evaluateWeather(data,6,now);
+ assert.equal(result.rainWindows.length,1);assert.equal(result.rainWindows[0].end,data.forecast.intervals[3].end);
+ assert.equal(formatRainWindows(result.rainWindows),'11:00–13:00');
+});
+
+test('A six-hour assessment crosses Danish midnight',()=>{
+ const night=new Date('2026-10-08T21:30:00Z');
+ const intervals=Array.from({length:8},(_,i)=>({start:new Date(Date.parse('2026-10-08T21:00:00Z')+i*3600000).toISOString(),end:new Date(Date.parse('2026-10-08T22:00:00Z')+i*3600000).toISOString(),precipitationMm:i===3?0.01:0}));
+ const result=evaluateWeather({forecast:{fresh:true,intervals}},6,night);
+ assert.equal(result.end,'2026-10-09T03:30:00.000Z');assert.equal(result.verdict,'rain');assert.equal(result.complete,true);
+});
+
+test('Small precipitation is not rounded to zero by forecast parsing',()=>{
+ const forecast=parseForecast({features:[point('2026-10-08T07:00:00Z',4),point('2026-10-08T08:00:00Z',4.00001)]},now);
+ assert.ok(forecast.intervals[0].precipitationMm>0);
+});
+
+test('A short query is aged using its model initialization, not its first returned step',()=>{
+ const collection={features:[point('2026-10-08T07:00:00Z',0),point('2026-10-08T08:00:00Z',0)]};
+ assert.equal(parseForecast(collection,now,{modelRunStartedAt:'2026-10-07T12:00:00Z'}).fresh,false);
+});
+
+test('CoverageJSON point forecasts decode without losing zero or null values',()=>{
+ const value={domain:{axes:{t:{values:['2026-10-08T07:00:00Z','2026-10-08T08:00:00Z']},x:{values:[12.57]},y:{values:[55.68]}}},ranges:{'total-precipitation':{values:[0,0.0001]},'temperature-2m':{values:[273.15,null]}}};
+ const decoded=coverageToGeoJSON(value,12.57,55.68);
+ assert.equal(decoded.features[0].properties['total-precipitation'],0);
+ assert.equal(decoded.features[1].properties['temperature-2m'],null);
+ assert.ok(parseForecast(decoded,now).intervals[0].precipitationMm>0);
+});
+
+test('A partial national overview may answer yes, but cannot answer no',()=>{
+ const dry={name:'Aalborg',forecast:{fresh:true,intervals:day().forecast.intervals}};
+ let forecast=combineRegionalForecasts([dry],2);
+ assert.equal(evaluateWeather({forecast},6,now).verdict,'unknown');
+ const wet={name:'Aarhus',forecast:{fresh:true,intervals:day(0.001).forecast.intervals}};
+ forecast=combineRegionalForecasts([wet],2);
+ assert.equal(evaluateWeather({forecast},6,now).verdict,'rain');
+});
+
+test('National current weather uses a range, deduplicates station readings and excludes foreign stations',()=>{
+ const observation=(id,value,param,observed='2026-10-08T07:20:00Z')=>({geometry:{coordinates:[12.57,55.68]},properties:{stationId:id,value,parameterId:param,observed}});
+ const stations={features:['a','b','foreign'].map(id=>({properties:{stationId:id,name:id,country:id==='foreign'?'SWE':'DNK'}}))};
+ const bundle={stations,temperature:{features:[observation('a',10,'temp_dry'),observation('a',30,'temp_dry','2026-10-08T07:10:00Z'),observation('b',16,'temp_dry'),observation('foreign',50,'temp_dry')]},cloud:{features:[observation('a',0,'cloud_cover'),observation('b',100,'cloud_cover')]},rain:{features:[observation('a',0,'precip_past10min')]}};
+ const data=nationalCurrent(bundle,now);
+ assert.deepEqual(data.current.temperature.range,{min:10,max:16});assert.equal(data.current.temperature.stationCount,2);assert.equal(data.current.summary.label,'Skiftende vejr');
+});
+
+test('Regional cloud data is available beyond 25 km without widening rain measurement radius',()=>{
+ const feature=parameterId=>({geometry:{coordinates:[12.95,55.68]},properties:{stationId:'regional',parameterId,observed:'2026-10-08T07:20:00Z',value:100}});
+ assert.equal(selectMeasurement({features:[feature('cloud_cover')]},null,55.68,12.0,'cloud_cover',now),null);
+ const regional=selectMeasurement({features:[feature('cloud_cover')]},null,55.68,12.0,'cloud_cover',now,75);
+ assert.equal(regional.regional,true);
+ assert.equal(selectObservation({features:[feature('precip_past10min')]},null,55.68,12.0,now),null);
+});
+
+test('Current endpoints never contact the forecast service and share Denmark data across locations',async()=>{
+ const original=globalThis.fetch;let observations=0,forecasts=0;
+ const observed=new Date(Date.now()-5*60000).toISOString();
+ globalThis.fetch=async url=>{
+  if(url.pathname.includes('forecastedr')){forecasts++;throw new Error('Forecast must not block current data');}
+  observations++;
+  if(url.pathname.includes('/station/'))return Response.json({features:[{properties:{stationId:'test',name:'Test',country:'DNK'}}]});
+  const parameterId=url.searchParams.get('parameterId');
+  return Response.json({features:[{geometry:{coordinates:[12.57,55.68]},properties:{stationId:'test',parameterId,observed,value:parameterId==='temp_dry'?13:0}}]});
+ };
+ try{
+  const country=await handler(new Request('http://localhost/api/weather?scope=denmark&part=current'));
+  assert.equal(country.status,200);assert.equal((await country.json()).current.temperature.value,13);
+  const local=await handler(new Request('http://localhost/api/weather?scope=local&part=current&lat=55.68&lon=12.57'));
+  assert.equal(local.status,200);assert.equal((await local.json()).current.temperature.value,13);
+  assert.equal(forecasts,0);assert.equal(observations,4);assert.equal(local.headers.get('X-App-Version'),'1.3.0');
+ }finally{globalThis.fetch=original;}
+});
+
+test('The public API is locked to six hours and rejects other periods',async()=>{
+ for(const hours of ['4','day','100'])assert.equal((await handler(new Request(`http://localhost/api/weather?scope=denmark&part=current&hours=${hours}`))).status,400);
 });

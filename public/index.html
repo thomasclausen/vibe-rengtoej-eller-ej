@@ -23,7 +23,7 @@
                 <img data-stamp="art" src="/assets/weather-unknown.svg" width="240" height="240" alt="" aria-hidden="true">
                 <figure data-stamp="gif" hidden><img data-stamp="gif-image" width="240" height="240" alt="Cute dancing GIF fra GIPHY" referrerpolicy="no-referrer"></figure>
               </div>
-              <div class="stamp-text"><strong class="stamp-price" data-stamp="temperature">—°</strong><p data-stamp="weather">Dit vejr</p><span data-stamp="location">Din lokation</span><small class="stamp-answer" id="stamp-answer">Regntøj i dag: —</small></div>
+              <div class="stamp-text"><strong class="stamp-price" data-stamp="temperature">—°</strong><p data-stamp="weather">Dit vejr</p><span data-stamp="location">Din lokation</span><small class="stamp-answer" id="stamp-answer">Regntøj næste 6 t: —</small><small class="stamp-rain-times" id="rain-times" hidden></small></div>
             </div>
           </div>
     </main>
@@ -37,7 +37,8 @@
       <div class="weather-info" id="weather-info" hidden>
         <p data-stamp="temperature-source">Graderne kommer fra en frisk DMI-måling.</p>
         <p data-stamp="weather-source">Vælg lokation for at se dit lokale vejr.</p>
-        <p id="forecast-detail">Anbefalingen gælder fra nu til dansk midnat.</p>
+        <p class="time-note">Regntider vises som hele modeltimer, der overlapper perioden.</p>
+        <p id="forecast-detail">Anbefalingen gælder altid de næste 6 timer.</p>
         <div id="data-warnings"></div>
         <p class="privacy-note">Din lokation afrundes og bruges til at hente vejrdata. Appen opretter ingen brugerprofil. Dit manuelle byvalg huskes i browseren.</p>
         <div class="info-actions"><button id="refresh" type="button" disabled>↻ Opdater vejret</button><a data-stamp="gif-credit" href="https://giphy.com/gifs/cute-dancing-39fj7g99qyD72" target="_blank" rel="noopener noreferrer" hidden>GIF via GIPHY ↗</a></div>
