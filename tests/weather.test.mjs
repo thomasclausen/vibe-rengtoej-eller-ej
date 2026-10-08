@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { midnightAfter, evaluateWeather } from '../public/weather-model.mjs';
-import { parseForecast, selectObservation, validateCoordinates } from '../lib/dmi.mjs';
+import { midnightAfter, evaluateWeather, currentWeather } from '../public/weather-model.mjs';
+import { parseForecast, selectObservation, selectMeasurement, validateCoordinates } from '../lib/dmi.mjs';
 import handler from '../netlify/functions/weather.mjs';
 
 const now = new Date('2026-10-08T07:30:00Z');
@@ -80,6 +80,67 @@ test('Station selection uses nearest fresh station and its latest observation', 
   const result=selectObservation({features},null,55.68,12.568,now);
   assert.equal(result.stationId,'close'); assert.equal(result.precipitationMm,0);
   assert.equal(selectObservation({features:[obs('too-far',13.57,'2026-10-08T07:20:00Z',1)]},null,55.68,12.568,now),null);
+});
+
+test('Current temperature accepts zero and sub-zero Celsius measurements', () => {
+  for (const value of [0,-4.5,13.3]) {
+    const data=day();data.current={temperature:{value,observedAt:'2026-10-08T07:20:00Z'}};
+    assert.equal(currentWeather(data,now).temperature.value,value);
+    assert.equal(currentWeather(data,now).temperature.source,'observation');
+    const collection={features:[{geometry:{coordinates:[12.57,55.68]},properties:{stationId:'temp',parameterId:'temp_dry',observed:'2026-10-08T07:20:00Z',value}}]};
+    assert.equal(selectMeasurement(collection,null,55.68,12.57,'temp_dry',now).value,value);
+  }
+});
+
+test('Current weather prioritizes observed rain and handles measured cloud cover', () => {
+  const reading=value=>({value,observedAt:'2026-10-08T07:20:00Z'});
+  const data={current:{cloudCover:reading(0)}};
+  assert.equal(currentWeather(data,now).label,'Sol');
+  data.current.cloudCover=reading(100);
+  assert.equal(currentWeather(data,now).label,'Overskyet');
+  data.current.cloudCover=reading(50);
+  assert.equal(currentWeather(data,now).label,'Let skyet');
+  data.current.cloudCover=reading(112);
+  assert.equal(currentWeather(data,now).label,'Vejr ukendt');
+  data.observation={observedAt:'2026-10-08T07:20:00Z',precipitationMm:0.05};
+  assert.equal(currentWeather(data,now).label,'Regnvejr');
+});
+
+test('Rain later today does not become current rain on the stamp', () => {
+  const data=day();data.forecast.intervals.at(-1).precipitationMm=2;
+  data.current={cloudCover:{value:0,observedAt:'2026-10-08T07:20:00Z'}};
+  assert.equal(evaluateWeather(data,null,now).verdict,'rain');
+  assert.equal(currentWeather(data,now).kind,'sun');
+});
+
+test('Stale current readings are ignored; forecast fallback is explicitly identified', () => {
+  const data=day();data.current={temperature:{value:25,observedAt:'2026-10-08T06:50:00Z'},cloudCover:{value:0,observedAt:'2026-10-08T06:50:00Z'}};
+  const result=currentWeather(data,now);
+  assert.ok(Math.abs(result.temperature.value-10)<1e-9);
+  assert.equal(result.temperature.source,'forecast');assert.equal(result.source,'forecast');
+  data.forecast=null;
+  assert.equal(currentWeather(data,now).temperature,null);
+  assert.equal(currentWeather(data,now).kind,'unknown');
+});
+
+test('Current readings remain usable when forecast and rain observations are unavailable', async () => {
+  const original=globalThis.fetch;
+  const observedAt=new Date(Date.now()-5*60000).toISOString();
+  globalThis.fetch=async url=>{
+    if(url.pathname.includes('forecastedr'))return Response.json({}, {status:429});
+    if(url.pathname.includes('/observation/')){
+      const parameterId=url.searchParams.get('parameterId');
+      return Response.json({features:parameterId==='temp_dry'?[{geometry:{coordinates:[10.20,56.16]},properties:{stationId:'aarhus',parameterId,observed:observedAt,value:12.4}}]:[]});
+    }
+    return Response.json({features:[]});
+  };
+  try {
+    const response=await handler(new Request('http://localhost/api/weather?lat=56.16&lon=10.20'));
+    assert.equal(response.status,200);
+    const data=await response.json();
+    assert.equal(currentWeather(data).temperature.value,12.4);
+    assert.equal(evaluateWeather(data).verdict,'unknown');
+  } finally {globalThis.fetch=original;}
 });
 
 test('Coordinates are required, checked and rounded', () => {

@@ -45,3 +45,38 @@ export function evaluateWeather(data, hours = null, now = new Date()) {
     intervals, totalMm: known.length ? totalMm : null, maxMm,
     firstWet: wetHours[0] ?? null, end: new Date(end).toISOString() };
 }
+
+// Today's recommendation and the current weather on the stamp are separate.
+// Rain later today must not become a claim that it is raining right now.
+export function currentWeather(data, now = new Date()) {
+  const fresh = reading => {
+    const age = now.getTime() - Date.parse(reading?.observedAt);
+    return reading && Number.isFinite(reading.value) && age >= -60000 && age <= 30 * 60000;
+  };
+  const firstInterval = data.forecast?.fresh !== false
+    ? data.forecast?.intervals?.find(h => Date.parse(h.start) <= now.getTime() && Date.parse(h.end) > now.getTime()) : null;
+  const measuredTemperature = data.current?.temperature;
+  const temperature = fresh(measuredTemperature)
+    ? { ...measuredTemperature, source: 'observation' }
+    : Number.isFinite(firstInterval?.temperatureC)
+      ? { value: firstInterval.temperatureC, observedAt: firstInterval.end, source: 'forecast' } : null;
+  const precipitation = data.observation;
+  const rainAge = now.getTime() - Date.parse(precipitation?.observedAt);
+  if (precipitation && Number.isFinite(precipitation.precipitationMm) && precipitation.precipitationMm > 0 && rainAge >= -60000 && rainAge <= 30 * 60000) {
+    return { temperature, kind: 'rain', label: 'Regnvejr', source: 'observation',
+      observedAt: precipitation.observedAt, stationName: precipitation.stationName };
+  }
+  const cloud = data.current?.cloudCover;
+  if (fresh(cloud)) {
+    const kind = cloud.value <= 25 ? 'sun' : cloud.value >= 75 && cloud.value <= 100 ? 'cloud' : cloud.value === 112 ? 'unknown' : 'partly-cloudy';
+    return { temperature, kind, label: {sun:'Sol',cloud:'Overskyet','partly-cloudy':'Let skyet',unknown:'Vejr ukendt'}[kind],
+      source: 'observation', observedAt: cloud.observedAt, stationName: cloud.stationName };
+  }
+  if (firstInterval && Number.isFinite(firstInterval.cloudCover)) {
+    const kind = firstInterval.precipitationMm >= 0.2 ? 'rain'
+      : firstInterval.cloudCover <= 0.25 ? 'sun' : firstInterval.cloudCover >= 0.75 ? 'cloud' : 'partly-cloudy';
+    return { temperature, kind, label: {rain:'Regnvejr',sun:'Sol',cloud:'Overskyet','partly-cloudy':'Let skyet'}[kind],
+      source: 'forecast', observedAt: firstInterval.end };
+  }
+  return { temperature, kind: 'unknown', label: 'Vejr ukendt', source: null, observedAt: null };
+}
