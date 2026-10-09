@@ -1,8 +1,8 @@
-# Regntøj eller ej? — version 1.4.3
+# Regntøj eller ej? — version 1.4.4
 
 En lille dansk webapp med brugerens originale frimærke og gradient, bygget i HTML, CSS og JavaScript med en Netlify Function. Ingen database, Vue/Nuxt eller DMI API-key er nødvendig.
 
-## Nyt i 1.4.3: enkel, fast frimærkekant
+## Nyt i 1.4.4: enkel, fast frimærkekant
 
 Frimærket er en almindelig HTML-flade på 312 × 456 px med hvid CSS-baggrund. En fast SVG bruges kun som CSS-maske til de gennemsigtige udskæringer: buer 24 px i diameter, mellemrum 12 px og 18 px fra hjørnet til første/sidste bue. Der er ingen kant-elementer, webkomponent eller JavaScript til størrelsesberegning. Størrelsen bevares også på mobil.
 
@@ -38,7 +38,7 @@ Kontrollér efter deployment:
 /api/weather?scope=local&part=forecast&lat=55.68&lon=12.57&hours=6
 ```
 
-Svarene fra denne version indeholder `version: "1.4.3"` og headeren `X-App-Version: 1.4.3`.
+Svarene fra denne version indeholder `version: "1.4.4"` og headeren `X-App-Version: 1.4.4`.
 
 ## Start lokalt
 
@@ -140,7 +140,7 @@ Geolokation kræver et aktivt klik og browserens tilladelse. Koordinater afrunde
 - Browserkontrol af Danmark som standard, byvalg, GPS-tilladelse, afvist og afbrudt GPS samt i-knappen består.
 - jsdom er kun et lokalt QA-værktøj og er ikke en afhængighed i appen.
 - Den faste maske er kontrolleret i en rigtig browser på desktop og mobil, inklusive pixelmål og DMI-footerens placering.
-- Version 1.4.3 leveres som ZIP/kildekode og er ikke deployet til brugerens Netlify-konto fra denne chat.
+- Version 1.4.4 leveres som ZIP/kildekode og er ikke deployet til brugerens Netlify-konto fra denne chat.
 
 ## Officielle kilder
 

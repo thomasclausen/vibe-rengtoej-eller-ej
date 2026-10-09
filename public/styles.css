@@ -11,13 +11,11 @@ button:focus-visible, select:focus-visible, a:focus-visible { outline: 3px solid
 .stamp-layout::before { content: ''; }
 .stamp-stage { display: flex; align-items: center; justify-content: center; padding: 0 24px; min-width: 0; }
 .bottom-dock { display: flex; flex-direction: column; align-items: center; padding-top: 22px; min-width: 0; }
-.city-picker { margin-top: 2px; min-width: 0; overflow: hidden; }
-.city-picker select { width: 100%; height: 27px; padding: 2px 0; border: 0; border-bottom: 2px solid #000; border-radius: 0; background: #fff; color: #333; font-size: 13px; cursor: pointer; }
-.info-button { cursor: pointer; background: rgba(255,255,255,.9); border: 1px solid rgba(255,255,255,.7); color: #333; border-radius: 5px; min-height: 32px; }
-.info-button { background: rgba(255,255,255,.9); border: 1px solid rgba(255,255,255,.7); color: #333; border-radius: 5px; min-height: 38px; }
-.info-button { flex: 0 0 30px; padding: 0; font: italic 16px Georgia, serif; }
-.info-button.has-warning { border-color: #cf9d44; }
-.info-button[aria-expanded=true] { background: #fff; }
+.city-picker { position: relative; margin-top: 2px; min-width: 0; overflow: hidden; }
+.city-picker::after { content: ''; position: absolute; right: 3px; top: 9px; width: 6px; height: 6px; border-right: 1px solid currentColor; border-bottom: 1px solid currentColor; transform: rotate(45deg); pointer-events: none; }
+.city-picker select { width: 100%; height: 27px; padding: 2px 18px 2px 0; appearance: none; -webkit-appearance: none; text-indent: 0; border: 0; border-bottom: 2px solid #000; border-radius: 0; background: #fff; color: #333; font-size: 13px; cursor: pointer; }
+.info-button { flex: 0 0 24px; min-height: 30px; padding: 0; cursor: pointer; background: transparent; border: 0; border-radius: 0; color: #333; opacity: .7; font: italic 14px Georgia, serif; }
+.info-button:hover, .info-button[aria-expanded=true] { opacity: 1; }
 .weather-info, .notice { width: min(340px, calc(100% - 40px)); background: rgba(255,255,255,.93); border-radius: 5px; margin: 12px 0 0; padding: 13px 15px; font-size: 11px; }
 .weather-info p { margin: 0 0 9px; }
 .weather-info .privacy-note { color: #69716e; font-size: 10px; }
@@ -27,8 +25,9 @@ button:focus-visible, select:focus-visible, a:focus-visible { outline: 3px solid
 .info-actions button { border: 0; padding: 2px 0; color: #365e68; background: transparent; font-size: 11px; }
 .info-actions a { color: #365e68; font-size: 10px; }
 .dmi-footer { align-self: stretch; margin-top: auto; padding: 16px 24px; min-height: 62px; display: flex; align-items: flex-end; justify-content: flex-end; gap: 8px; flex-shrink: 0; }
-.source-link { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,.88); padding: 7px 10px; border-radius: 4px; color: #333; text-decoration: none; font-size: 10px; }
-.source-dot { width: 5px; height: 5px; border-radius: 50%; background: #3c9e9b; }
+.source-link { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 0; background: transparent; color: #333; opacity: .7; text-decoration: none; font-size: 10px; }
+.source-link:hover { opacity: 1; text-decoration: underline; }
+.source-dot { display: none; }
 .noscript { margin: 16px auto; padding: 12px; background: rgba(255,255,255,.9); max-width: 340px; }
 @media (max-width: 380px) { .stamp-stage { padding-left: 4px; padding-right: 4px; } .dmi-footer { padding-left: 16px; padding-right: 16px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

@@ -10,7 +10,7 @@
 .stamp-picture figure { margin: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
 .stamp-picture figure img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .stamp-text { position: relative; flex: 0 0 104px; padding: 18px 0 6px; }
-.stamp-price { float: right; font-size: 48px; font-weight: 700; letter-spacing: -2px; line-height: 1; margin: 0 0 0 8px; }
+.stamp-price { float: right; font-size: 48px; font-weight: 700; letter-spacing: -2px; line-height: 1; margin: 0 0 0 16px; }
 .stamp-price sup { font-size: 55%; line-height: 0; vertical-align: super; letter-spacing: 0; }
 .stamp-text p { font-size: 18px; font-weight: 700; line-height: 1.5; text-transform: uppercase; margin: 0; }
 .stamp-text > span { font-size: 14px; line-height: 1.5; display: block; overflow-wrap: anywhere; }
