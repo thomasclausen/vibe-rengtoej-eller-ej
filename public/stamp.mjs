@@ -3,7 +3,7 @@ import { currentWeather, TIME_ZONE } from './weather-model.mjs';
 const field = (root, name) => root.querySelector(`[data-stamp="${name}"]`);
 const clock = date => new Intl.DateTimeFormat('da-DK', { timeZone: TIME_ZONE, hour:'2-digit', minute:'2-digit', hourCycle:'h23' }).format(new Date(date));
 const degree = value => new Intl.NumberFormat('da-DK', {maximumFractionDigits:0}).format(Math.abs(value)<0.5 ? 0 : value);
-const artworks = {sun:'weather-sun.svg', cloud:'weather-cloud.svg', 'partly-cloudy':'weather-partly-cloudy.svg', rain:'weather-rain.svg', unknown:'weather-unknown.svg'};
+const artworks = {sun:'weather-sun.svg', cloud:'weather-cloud.svg', 'partly-cloudy':'weather-partly-cloudy.svg', rain:'weather-rain.svg', dry:'weather-dry.svg', unknown:'weather-unknown.svg'};
 
 function locationText(location) {
   if (!location) return 'Din lokation';
@@ -68,6 +68,7 @@ export function renderStamp(root, data, location, now = new Date(), reducedMotio
   field(root,'weather-source').textContent = current.source === 'observation'
     ? `Vejrtype: vurderet ud fra måling ved ${current.stationName || 'nærmeste station'}${distance(current)}`
     : current.source === 'forecast' ? 'Vejrtype: vurderet ud fra den nærmeste timeprognose.' : 'Vejrtype: der mangler aktuelle data.';
+  if(current.note)field(root,'weather-source').textContent+=' '+current.note;
   setArtwork(root,current.kind,reducedMotion);
   return current;
 }
