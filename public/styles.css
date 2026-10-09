@@ -11,8 +11,8 @@ button:focus-visible, select:focus-visible, a:focus-visible { outline: 3px solid
 .stamp-layout::before { content: ''; }
 .stamp-stage { display: flex; align-items: center; justify-content: center; padding: 0 24px; min-width: 0; }
 .bottom-dock { display: flex; flex-direction: column; align-items: center; padding-top: 22px; min-width: 0; }
-.city-picker { flex: 0 0 34px; margin-top: 6px; min-width: 0; }
-.city-picker select { width: 100%; height: 32px; padding: 3px 8px; border: 2px solid #000; border-radius: 0; background: #fff; color: #333; font-size: 13px; cursor: pointer; }
+.city-picker { margin-top: 2px; min-width: 0; overflow: hidden; }
+.city-picker select { width: 100%; height: 27px; padding: 2px 0; border: 0; border-bottom: 2px solid #000; border-radius: 0; background: #fff; color: #333; font-size: 13px; cursor: pointer; }
 .info-button { cursor: pointer; background: rgba(255,255,255,.9); border: 1px solid rgba(255,255,255,.7); color: #333; border-radius: 5px; min-height: 32px; }
 .info-button { background: rgba(255,255,255,.9); border: 1px solid rgba(255,255,255,.7); color: #333; border-radius: 5px; min-height: 38px; }
 .info-button { flex: 0 0 30px; padding: 0; font: italic 16px Georgia, serif; }

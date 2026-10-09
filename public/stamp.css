@@ -9,14 +9,14 @@
 .stamp-picture > img { display: block; width: 90%; height: 90%; object-fit: contain; }
 .stamp-picture figure { margin: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
 .stamp-picture figure img { display: block; width: 100%; height: 100%; object-fit: contain; }
-.stamp-text { position: relative; flex: 0 0 88px; padding: 18px 0 6px; }
+.stamp-text { position: relative; flex: 0 0 104px; padding: 18px 0 6px; }
 .stamp-price { float: right; font-size: 48px; font-weight: 700; letter-spacing: -2px; line-height: 1; margin: 0 0 0 8px; }
 .stamp-price sup { font-size: 55%; line-height: 0; vertical-align: super; letter-spacing: 0; }
 .stamp-text p { font-size: 18px; font-weight: 700; line-height: 1.5; text-transform: uppercase; margin: 0; }
 .stamp-text > span { font-size: 14px; line-height: 1.5; display: block; overflow-wrap: anywhere; }
 .stamp-answer { display: block; font-size: 9px; color: #64706c; line-height: 1.4; margin-top: 5px; }
 .stamp-rain-times { display: block; font-size: 9px; color: #835821; line-height: 1.4; margin-top: 3px; overflow-wrap: anywhere; }
-.weather-stamp[data-rain-times=true] .stamp-text { flex-basis: 104px; }
+.weather-stamp[data-rain-times=true] .stamp-text { flex-basis: 120px; }
 .weather-stamp[data-scope=denmark] .stamp-price { font-size: 30px; }
 .weather-stamp[data-scope=denmark] .stamp-text p { font-size: 14px; }
 .weather-stamp[data-weather=sun] { --stamp-picture: #dd8872; }
@@ -36,4 +36,4 @@
 .design-preview .stamp-sources { font-size: 10px; text-align: center; padding-top: 10px; }
 .design-preview .stamp-sources span { display: block; }
 @media (max-width: 800px) { .design-preview .stamp-examples { grid-template-columns: 1fr; gap: 30px; } }
-@media (max-width: 380px) { .stamp-text { flex-basis: 80px; padding-top: 14px; } .stamp-price { font-size: 40px; } .stamp-text p { font-size: 16px; } .stamp-text > span { font-size: 13px; } }
+@media (max-width: 380px) { .stamp-text { flex-basis: 100px; padding-top: 14px; } .stamp-price { font-size: 40px; } .stamp-text p { font-size: 16px; } .stamp-text > span { font-size: 13px; } }
