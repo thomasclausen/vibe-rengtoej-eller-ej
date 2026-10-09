@@ -1,8 +1,8 @@
-# Regntøj eller ej? — version 1.4.1
+# Regntøj eller ej? — version 1.4.2
 
 En lille dansk webapp med brugerens originale frimærke og gradient, bygget i HTML, CSS og JavaScript med en Netlify Function. Ingen database, Vue/Nuxt eller DMI API-key er nødvendig.
 
-## Nyt i 1.4.1: enkel, fast frimærkekant
+## Nyt i 1.4.2: enkel, fast frimærkekant
 
 Frimærket er en almindelig HTML-flade på 312 × 456 px med hvid CSS-baggrund. En fast SVG bruges kun som CSS-maske til de gennemsigtige udskæringer: buer 24 px i diameter, mellemrum 12 px og 18 px fra hjørnet til første/sidste bue. Der er ingen kant-elementer, webkomponent eller JavaScript til størrelsesberegning. Størrelsen bevares også på mobil.
 
@@ -38,7 +38,7 @@ Kontrollér efter deployment:
 /api/weather?scope=local&part=forecast&lat=55.68&lon=12.57&hours=6
 ```
 
-Svarene fra denne version indeholder `version: "1.4.1"` og headeren `X-App-Version: 1.4.1`.
+Svarene fra denne version indeholder `version: "1.4.2"` og headeren `X-App-Version: 1.4.2`.
 
 ## Start lokalt
 
@@ -130,17 +130,17 @@ DMI's prognoseendpoint returnerede fortsat HTTP 429 “Server is busy” i live-
 
 Frimærket bygger på brugerens [wRJWop](https://codepen.io/thomasclausen/pen/wRJWop). Gradientens farvestop fra [zmpGWZ](https://codepen.io/thomasclausen/pen/zmpGWZ) er bevaret uændret. Den hvide perforerede kant er gennemsigtig mod baggrunden. DMI-linket ligger i sin egen footer og følger normalt layout; det kan ikke lægge sig oven på frimærket.
 
-Lokationsknap og byvalg står diskret under frimærket. Oplysninger og manuel opdatering findes under i-knappen. Der er ingen tidsvælger. `/design-preview.html` viser tydeligt markerede eksempeldata.
+Lokationsmenuen i frimærket indeholder Danmark som standard, Brug min lokation og byerne. I-knappen står ved DMI-linket. Oplysninger og manuel opdatering findes under i-knappen. Der er ingen tidsvælger. `/design-preview.html` viser tydeligt markerede eksempeldata.
 
-Geolokation kræver et aktivt klik og browserens tilladelse. Koordinater afrundes til to decimaler. Appen opretter ingen brugerprofil eller lokationsdatabase. Et manuelt byvalg huskes i browseren. Netlify og DMI kan behandle forespørgsler i driftslogs/cache. GIF'en hentes fra GIPHY ved behov, og GIPHY kan se billedforespørgslen. Appen bruger ingen analyseværktøjer.
+Geolokation kræver et aktivt klik og browserens tilladelse. Koordinater afrundes til to decimaler. Appen opretter ingen brugerprofil eller lokationsdatabase. Danmark er standard ved åbning. Netlify og DMI kan behandle forespørgsler i driftslogs/cache. GIF'en hentes fra GIPHY ved behov, og GIPHY kan se billedforespørgslen. Appen bruger ingen analyseværktøjer.
 
 ## Verifikation
 
 - 30 automatiske tests består, inklusive små regnmængder, seks timer over midnat, CoverageJSON, modelalder, nationalt temperaturinterval, delvise prognoser, stationsafstande og separate måle-/prognosekald.
-- 9 yderligere DOM-kontroller med jsdom består: data vises før prognoser, den ønskede rækkefølge, sene nationale svar, regntidsrum, låst periode, GIF-indlæsning, reduceret bevægelse og lokationsfejl/races.
+- Browserkontrol af Danmark som standard, byvalg, GPS-tilladelse, afvist og afbrudt GPS samt i-knappen består.
 - jsdom er kun et lokalt QA-værktøj og er ikke en afhængighed i appen.
 - Den faste maske er kontrolleret i en rigtig browser på desktop og mobil, inklusive pixelmål og DMI-footerens placering.
-- Version 1.4.1 leveres som ZIP/kildekode og er ikke deployet til brugerens Netlify-konto fra denne chat.
+- Version 1.4.2 leveres som ZIP/kildekode og er ikke deployet til brugerens Netlify-konto fra denne chat.
 
 ## Officielle kilder
 
