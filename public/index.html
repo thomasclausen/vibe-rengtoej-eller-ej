@@ -19,16 +19,11 @@
                 <img data-stamp="art" src="/assets/weather-unknown.svg" width="240" height="240" alt="" aria-hidden="true">
                 <figure data-stamp="gif" hidden><img data-stamp="gif-image" width="240" height="240" alt="Cute dancing GIF fra GIPHY" referrerpolicy="no-referrer"></figure>
               </div>
-              <div class="stamp-text"><strong class="stamp-price" data-stamp="temperature">—°</strong><p data-stamp="weather">Dit vejr</p><span data-stamp="location">Din lokation</span><small class="stamp-answer" id="stamp-answer">Regntøj næste 6 t: —</small><small class="stamp-rain-times" id="rain-times" hidden></small></div>
+              <div class="stamp-text"><strong class="stamp-price" data-stamp="temperature">—°</strong><p data-stamp="weather">Dit vejr</p><span class="sr-only" data-stamp="location">Din lokation</span><div class="city-picker"><label class="sr-only" for="city">Vælg lokation</label><select id="city"><option value="denmark">Danmark</option><option disabled aria-hidden="true">──────────────</option><option value="geolocation">Brug min lokation</option><option disabled aria-hidden="true">──────────────</option></select></div><small class="stamp-answer" id="stamp-answer">Regntøj næste 6 t: —</small><small class="stamp-rain-times" id="rain-times" hidden></small></div>
             </div>
           </div>
     </main>
     <div class="bottom-dock">
-      <div class="location-controls">
-        <button type="button" id="locate" class="location-button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg><span>Brug min lokation</span></button>
-        <div class="city-picker"><label class="sr-only" for="city">Vælg din by</label><select id="city"><option value="">Vælg din by</option></select><span aria-hidden="true">⌄</span></div>
-        <button type="button" class="info-button" id="info-toggle" aria-label="Om vejrdata og privatliv" aria-expanded="false" aria-controls="weather-info">i</button>
-      </div>
       <p id="notice" class="notice" role="status" hidden></p>
       <div class="weather-info" id="weather-info" hidden>
         <p data-stamp="temperature-source">Graderne kommer fra en frisk DMI-måling.</p>
@@ -36,10 +31,10 @@
         <p class="time-note">Regntider vises som hele modeltimer, der overlapper perioden.</p>
         <p id="forecast-detail">Anbefalingen gælder altid de næste 6 timer.</p>
         <div id="data-warnings"></div>
-        <p class="privacy-note">Din lokation afrundes og bruges til at hente vejrdata. Appen opretter ingen brugerprofil. Dit manuelle byvalg huskes i browseren.</p>
+        <p class="privacy-note">Din lokation afrundes og bruges til at hente vejrdata. Appen opretter ingen brugerprofil. Danmark vises som standard.</p>
         <div class="info-actions"><button id="refresh" type="button" disabled>↻ Opdater vejret</button><a data-stamp="gif-credit" href="https://giphy.com/gifs/cute-dancing-39fj7g99qyD72" target="_blank" rel="noopener noreferrer" hidden>GIF via GIPHY ↗</a></div>
       </div>
-      <footer class="dmi-footer"><a class="source-link" href="https://www.dmi.dk/friedata/dokumentation/apis" target="_blank" rel="noopener noreferrer"><span class="source-dot" aria-hidden="true"></span>Vejrdata fra DMI <span aria-hidden="true">↗</span></a></footer>
+      <footer class="dmi-footer"><button type="button" class="info-button" id="info-toggle" aria-label="Om vejrdata og privatliv" aria-expanded="false" aria-controls="weather-info">i</button><a class="source-link" href="https://www.dmi.dk/friedata/dokumentation/apis" target="_blank" rel="noopener noreferrer"><span class="source-dot" aria-hidden="true"></span>Vejrdata fra DMI <span aria-hidden="true">↗</span></a></footer>
     </div>
   </section>
   <noscript><p class="noscript">Slå JavaScript til for at hente dit lokale vejr.</p></noscript>

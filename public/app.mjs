@@ -111,7 +111,7 @@ async function forecastRequest(scope,target,location){
 }
 async function countryStart(){await currentRequest('denmark',state.country);void forecastRequest('denmark',state.country);}
 async function chooseLocal(location){
-  state.geoRequest++;$('locate').disabled=false;$('locate').querySelector('span').textContent='Brug min lokation';state.local?.controllers.current?.abort();state.local?.controllers.forecast?.abort();
+  state.geoRequest++;state.local?.controllers.current?.abort();state.local?.controllers.forecast?.abort();
   state.target=location;const target=slot();state.local=target;
   notice(`Henter lokalt vejr for ${location.name}…`);
   await state.countryReady;
@@ -120,20 +120,31 @@ async function chooseLocal(location){
   if(state.local!==target)return;
   void forecastRequest('local',target,location);
 }
-$('city').addEventListener('change',()=>{const option=$('city').selectedOptions[0];if(!option.value)return;try{localStorage.setItem('regntoej-city',option.value);}catch{};void chooseLocal({name:option.value,lat:Number(option.dataset.lat),lon:Number(option.dataset.lon)});});
-$('locate').addEventListener('click',()=>{
-  if(!navigator.geolocation){notice('Din browser understøtter ikke lokation. Vælg en by i stedet.');return;}
-  const generation=++state.geoRequest;$('locate').disabled=true;$('locate').querySelector('span').textContent='Finder lokation…';
+let selectedLocation='denmark';
+function chooseCountry(){
+  state.geoRequest++;state.local?.controllers.current?.abort();state.local?.controllers.forecast?.abort();
+  state.local=null;state.target=null;selectedLocation='denmark';notice();display();
+}
+function locate(){
+  const previous=selectedLocation;
+  if(!navigator.geolocation){$('city').value=previous;notice('Din browser understøtter ikke lokation. Vælg en by i stedet.');return;}
+  const generation=++state.geoRequest;notice('Finder din lokation…');
   navigator.geolocation.getCurrentPosition(position=>{
     if(generation!==state.geoRequest)return;
-    $('locate').disabled=false;$('locate').querySelector('span').textContent='Brug min lokation';$('city').value='';
-    try{localStorage.removeItem('regntoej-city');}catch{}
+    selectedLocation='geolocation';
     void chooseLocal({name:'Din lokation',lat:Math.round(position.coords.latitude*100)/100,lon:Math.round(position.coords.longitude*100)/100});
   },error=>{
     if(generation!==state.geoRequest)return;
-    $('locate').disabled=false;$('locate').querySelector('span').textContent='Brug min lokation';
+    $('city').value=previous;
     notice(error.code===1?'Adgang til din lokation blev ikke givet. Vælg din by, eller tillad lokation i browseren.':'Din lokation kunne ikke findes. Vælg din by i stedet.');
   },{enableHighAccuracy:false,timeout:12000,maximumAge:300000});
+}
+$('city').addEventListener('change',()=>{
+  const option=$('city').selectedOptions[0];
+  if(option.value==='denmark'){chooseCountry();return;}
+  if(option.value==='geolocation'){locate();return;}
+  selectedLocation=option.value;
+  void chooseLocal({name:option.value,lat:Number(option.dataset.lat),lon:Number(option.dataset.lon)});
 });
 $('info-toggle').addEventListener('click',()=>{const expanded=$('info-toggle').getAttribute('aria-expanded')==='true';$('info-toggle').setAttribute('aria-expanded',String(!expanded));$('weather-info').hidden=expanded;});
 async function refresh(){
@@ -146,4 +157,3 @@ setInterval(()=>{if(document.visibilityState==='visible'&&!active().currentPendi
 document.addEventListener('visibilitychange',()=>{const data=active().data;if(document.visibilityState==='visible'&&!active().currentPending&&(!data||Date.now()-Date.parse(data.fetchedAt)>5*60000))void refresh();});
 resetStamp(root,{name:'Danmark (overblik)'},true);
 state.countryReady=countryStart();
-try{const saved=localStorage.getItem('regntoej-city');const remembered=cities.find(c=>c[0]===saved);if(remembered)void state.countryReady.then(()=>{if(state.target||state.geoRequest>0)return;$('city').value=remembered[0];return chooseLocal({name:remembered[0],lat:remembered[1],lon:remembered[2]});});}catch{}
