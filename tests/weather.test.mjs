@@ -1,7 +1,7 @@
 import test, {beforeEach} from 'node:test';
 import assert from 'node:assert/strict';
 import { midnightAfter, evaluateWeather, currentWeather, formatRainWindows } from '../public/weather-model.mjs';
-import { parseForecast, selectObservation, selectMeasurement, validateCoordinates, clearDataCache, nationalCurrent, combineRegionalForecasts, coverageToGeoJSON } from '../lib/dmi.mjs';
+import { parseForecast, selectObservation, selectMeasurement, validateCoordinates, clearDataCache, nationalCurrent, combineRegionalForecasts, coverageToGeoJSON, APP_VERSION } from '../lib/dmi.mjs';
 import handler from '../netlify/functions/weather.mjs';
 
 const now = new Date('2026-10-08T07:30:00Z');
@@ -269,10 +269,18 @@ test('Current endpoints never contact the forecast service and share Denmark dat
   assert.equal(country.status,200);assert.equal((await country.json()).current.temperature.value,13);
   const local=await handler(new Request('http://localhost/api/weather?scope=local&part=current&lat=55.68&lon=12.57'));
   assert.equal(local.status,200);assert.equal((await local.json()).current.temperature.value,13);
-  assert.equal(forecasts,0);assert.equal(observations,4);assert.equal(local.headers.get('X-App-Version'),'1.3.0');
+  assert.equal(forecasts,0);assert.equal(observations,4);assert.equal(local.headers.get('X-App-Version'),APP_VERSION);
  }finally{globalThis.fetch=original;}
 });
 
 test('The public API is locked to six hours and rejects other periods',async()=>{
  for(const hours of ['4','day','100'])assert.equal((await handler(new Request(`http://localhost/api/weather?scope=denmark&part=current&hours=${hours}`))).status,400);
+});
+
+test('Aalborg-style missing cloud data shows measured dry conditions without claiming sunshine or a dry forecast',()=>{
+ const data={scope:'local',current:{temperature:{value:10,observedAt:'2026-10-08T07:20:00Z'},cloudCover:null},observation:{precipitationMm:0,observedAt:'2026-10-08T07:20:00Z',stationName:'Flyvestation Ålborg',distanceKm:6.6},forecast:null};
+ const weather=currentWeather(data,now);
+ assert.equal(weather.kind,'dry');assert.equal(weather.label,'Ingen målt regn');assert.equal(weather.temperature.value,10);
+ assert.match(weather.note,/skydækkemåling/);assert.equal(evaluateWeather(data,6,now).verdict,'unknown');
+ data.observation.observedAt='2026-10-08T06:00:00Z';assert.equal(currentWeather(data,now).kind,'unknown');
 });

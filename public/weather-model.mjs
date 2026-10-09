@@ -92,6 +92,11 @@ export function currentWeather(data, now = new Date()) {
     return { temperature, kind, label: {sun:'Sol',cloud:'Overskyet','partly-cloudy':'Let skyet',unknown:'Vejr ukendt'}[kind],
       source: 'observation', observedAt: cloud.observedAt, stationName: cloud.stationName, distanceKm: cloud.distanceKm, regional: cloud.regional };
   }
+  if (precipitation && precipitation.precipitationMm === 0 && rainAge >= -60000 && rainAge <= 30 * 60000) {
+    return {temperature,kind:'dry',label:'Ingen målt regn',source:'observation',
+      observedAt:precipitation.observedAt,stationName:precipitation.stationName,distanceKm:precipitation.distanceKm,
+      note:'Der mangler en frisk skydækkemåling i nærheden. Dette betyder ikke nødvendigvis sol eller skyfrit vejr.'};
+  }
   if (firstInterval && Number.isFinite(firstInterval.cloudCover)) {
     const kind = firstInterval.precipitationMm > 0 ? 'rain'
       : firstInterval.cloudCover <= 0.25 ? 'sun' : firstInterval.cloudCover >= 0.75 ? 'cloud' : 'partly-cloudy';

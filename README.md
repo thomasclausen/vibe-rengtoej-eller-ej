@@ -1,6 +1,14 @@
-# Regntøj eller ej? — version 1.3
+# Regntøj eller ej? — version 1.4.1
 
 En lille dansk webapp med brugerens originale frimærke og gradient, bygget i HTML, CSS og JavaScript med en Netlify Function. Ingen database, Vue/Nuxt eller DMI API-key er nødvendig.
+
+## Nyt i 1.4.1: enkel, fast frimærkekant
+
+Frimærket er en almindelig HTML-flade på 312 × 456 px med hvid CSS-baggrund. En fast SVG bruges kun som CSS-maske til de gennemsigtige udskæringer: buer 24 px i diameter, mellemrum 12 px og 18 px fra hjørnet til første/sidste bue. Der er ingen kant-elementer, webkomponent eller JavaScript til størrelsesberegning. Størrelsen bevares også på mobil.
+
+## Rettelse i 1.3.1
+
+Aalborg kan have frisk temperatur og en tør nedbørsmåling uden en frisk skydækkemåling. Denne situation vises nu som **Ingen målt regn**, med en neutral lukket paraply. Appen gætter ikke sol eller overskyet. Manglende prognose giver fortsat **Ved ikke** på regntøjsvurderingen. En gammel eller manglende nedbørsmåling bliver ikke automatisk til tørvejr.
 
 ## Nyt i denne version
 
@@ -30,7 +38,7 @@ Kontrollér efter deployment:
 /api/weather?scope=local&part=forecast&lat=55.68&lon=12.57&hours=6
 ```
 
-Svarene fra denne version indeholder `version: "1.3.0"` og headeren `X-App-Version: 1.3.0`.
+Svarene fra denne version indeholder `version: "1.4.1"` og headeren `X-App-Version: 1.4.1`.
 
 ## Start lokalt
 
@@ -128,11 +136,11 @@ Geolokation kræver et aktivt klik og browserens tilladelse. Koordinater afrunde
 
 ## Verifikation
 
-- 29 automatiske tests består, inklusive små regnmængder, seks timer over midnat, CoverageJSON, modelalder, nationalt temperaturinterval, delvise prognoser, stationsafstande og separate måle-/prognosekald.
+- 30 automatiske tests består, inklusive små regnmængder, seks timer over midnat, CoverageJSON, modelalder, nationalt temperaturinterval, delvise prognoser, stationsafstande og separate måle-/prognosekald.
 - 9 yderligere DOM-kontroller med jsdom består: data vises før prognoser, den ønskede rækkefølge, sene nationale svar, regntidsrum, låst periode, GIF-indlæsning, reduceret bevægelse og lokationsfejl/races.
 - jsdom er kun et lokalt QA-værktøj og er ikke en afhængighed i appen.
-- Browserkontrollen kunne ikke starte i miljøet; fuld automatisk visuel kontrol er derfor ikke gennemført. Den lokale preview kan bruges til manuel kontrol.
-- Version 1.3 leveres som ZIP/kildekode og er ikke deployet til brugerens Netlify-konto fra denne chat.
+- Den faste maske er kontrolleret i en rigtig browser på desktop og mobil, inklusive pixelmål og DMI-footerens placering.
+- Version 1.4.1 leveres som ZIP/kildekode og er ikke deployet til brugerens Netlify-konto fra denne chat.
 
 ## Officielle kilder
 
